@@ -370,6 +370,114 @@ body {
   gap: 8px;
 }
 
+/* Detalle de Gastos */
+.detalle-toggle {
+  font-size: 11px;
+  color: #C9A84C;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.gastos-detalle {
+  margin-top: 10px;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 10px;
+  border: 1px solid #eee;
+}
+
+.gasto-item-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 28px;
+  gap: 6px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.gasto-item-concepto, .gasto-item-monto {
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+}
+
+.gasto-item-monto {
+  text-align: right;
+}
+
+.gasto-item-del {
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.gastos-add-btn {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed #C9A84C;
+  background: none;
+  color: #C9A84C;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* Pago del día (override para medio día u otra tarifa) */
+.pago-dia-hint {
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #999;
+}
+
+.pago-dia-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.pago-dia-row {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.pago-dia-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.pago-dia-input {
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  background: white;
+}
+
+.pago-dia-input:focus {
+  outline: none;
+  border-color: #C9A84C;
+}
+
 .team-btn {
   padding: 12px;
   border: 2px solid #e0e0e0;
@@ -1342,6 +1450,36 @@ function rangoQuincena(numQuincena) {
   return { inicio: 16, fin: diasEnMes };
 }
 
+// Pago efectivo de una persona en un día: usa el monto personalizado si existe (ej. medio día),
+// si no, usa su salario diario normal configurado en Ajustes
+function pagoDelDia(dia, persona) {
+  const d = datos[dia];
+  if (!d || !d[persona]) return 0;
+  if (d.pagoCustom && d.pagoCustom[persona] !== undefined && d.pagoCustom[persona] !== null) {
+    return parseFloat(d.pagoCustom[persona]) || 0;
+  }
+  return salarios[persona];
+}
+
+function etiquetaDetalleGastos(data) {
+  const items = data.gastosDetalle || [];
+  return items.length ? `📝 ${items.length} concepto${items.length > 1 ? 's' : ''}` : '📝 Detallar';
+}
+
+function filaPagoHTML(dia, persona, nombre) {
+  const d = datos[dia];
+  if (!d || !d[persona]) return '';
+  const valor = pagoDelDia(dia, persona);
+  return `
+    <div class="pago-dia-row">
+      <span class="pago-dia-nombre">${nombre}</span>
+      <input type="number" class="pago-dia-input" id="pago_${persona}_${dia}" 
+             value="${valor}" step="0.01"
+             oninput="actualizarPagoDia(${dia}, '${persona}')">
+    </div>
+  `;
+}
+
 function cambiarMes() {
   mesActual = parseInt(document.getElementById('mesSelector').value);
   
@@ -1444,10 +1582,12 @@ function inicializarMes() {
       abierto: fecha.getDay() !== 0,
       ingreso: 0,
       gastos: 0,
+      gastosDetalle: [],
       servicios: 0,
       juan: false,
       rene: false,
-      daniel: false
+      daniel: false,
+      pagoCustom: {}
     };
   }
 }
@@ -1524,10 +1664,17 @@ function generarDias() {
         </div>
         
         <div>
-          <div class="field-label">📉 Gastos</div>
+          <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>📉 Gastos</span>
+            <span class="detalle-toggle" id="detalleToggle_${dia}" onclick="toggleDetalleGastos(${dia})">${etiquetaDetalleGastos(data)}</span>
+          </div>
           <input type="number" class="field-input" id="gastos_${dia}" 
                  value="${data.gastos || ''}" placeholder="$0.00" step="0.01"
-                 oninput="actualizarDia(${dia})">
+                 oninput="actualizarDia(${dia})" ${(data.gastosDetalle && data.gastosDetalle.length) ? 'readonly' : ''}>
+          <div class="gastos-detalle" id="gastosDetalle_${dia}" style="display:none;">
+            <div class="gastos-detalle-lista" id="gastosDetalleLista_${dia}"></div>
+            <button type="button" class="gastos-add-btn" onclick="agregarGastoItem(${dia})">+ Agregar concepto</button>
+          </div>
         </div>
         
         <div>
@@ -1544,6 +1691,11 @@ function generarDias() {
             <button class="team-btn ${data.rene ? 'active' : ''}" id="rene_${dia}" onclick="toggleTeam(${dia}, 'rene')">René</button>
             <button class="team-btn ${data.daniel ? 'active' : ''}" id="daniel_${dia}" onclick="toggleTeam(${dia}, 'daniel')">Daniel</button>
           </div>
+        </div>
+        
+        <div id="pagoDetalle_${dia}" style="${(data.juan || data.rene || data.daniel) ? '' : 'display:none;'}">
+          <div class="field-label">💵 Pago del día <span class="pago-dia-hint">(edita si no trabajó el día completo)</span></div>
+          <div class="pago-dia-grid" id="pagoDiaGrid_${dia}">${filaPagoHTML(dia, 'juan', 'Juan') + filaPagoHTML(dia, 'rene', 'René') + filaPagoHTML(dia, 'daniel', 'Daniel')}</div>
         </div>
         
         <div class="score" id="score_${dia}">-</div>
@@ -1598,21 +1750,19 @@ function generarResumenQuincenas() {
     const { inicio, fin } = rangoQuincena(q);
     
     let ventas = 0, gastos = 0, juanDias = 0, reneDias = 0, danielDias = 0;
+    let juanPago = 0, renePago = 0, danielPago = 0;
     
     for (let dia = inicio; dia <= fin; dia++) {
       const d = datos[dia];
       if (d && d.abierto) {
         ventas += d.ingreso;
         gastos += d.gastos;
-        if (d.juan) juanDias++;
-        if (d.rene) reneDias++;
-        if (d.daniel) danielDias++;
+        if (d.juan) { juanDias++; juanPago += pagoDelDia(dia, 'juan'); }
+        if (d.rene) { reneDias++; renePago += pagoDelDia(dia, 'rene'); }
+        if (d.daniel) { danielDias++; danielPago += pagoDelDia(dia, 'daniel'); }
       }
     }
     
-    const juanPago = juanDias * salarios.juan;
-    const renePago = reneDias * salarios.rene;
-    const danielPago = danielDias * salarios.daniel;
     const nomina = juanPago + renePago + danielPago;
     const ganancia = ventas - gastos - nomina;
     const pct = (ventas / META_QUINCENAL * 100).toFixed(0);
@@ -1681,6 +1831,119 @@ function toggleTeam(dia, persona) {
   datos[dia][persona] = !datos[dia][persona];
   const btn = document.getElementById(`${persona}_${dia}`);
   btn.className = `team-btn ${datos[dia][persona] ? 'active' : ''}`;
+  
+  // Si se desactiva, limpiar cualquier pago personalizado de ese día para esa persona
+  if (!datos[dia][persona] && datos[dia].pagoCustom) {
+    delete datos[dia].pagoCustom[persona];
+  }
+  
+  renderPagoDelDia(dia);
+  actualizarTotales();
+  autoGuardar();
+}
+
+function renderPagoDelDia(dia) {
+  const cont = document.getElementById(`pagoDetalle_${dia}`);
+  const grid = document.getElementById(`pagoDiaGrid_${dia}`);
+  if (!cont || !grid) return;
+  const algunoActivo = datos[dia].juan || datos[dia].rene || datos[dia].daniel;
+  cont.style.display = algunoActivo ? '' : 'none';
+  grid.innerHTML = filaPagoHTML(dia, 'juan', 'Juan') + filaPagoHTML(dia, 'rene', 'René') + filaPagoHTML(dia, 'daniel', 'Daniel');
+}
+
+function actualizarPagoDia(dia, persona) {
+  const input = document.getElementById(`pago_${persona}_${dia}`);
+  const valor = parseFloat(input.value);
+  if (!datos[dia].pagoCustom) datos[dia].pagoCustom = {};
+  
+  if (isNaN(valor) || valor === salarios[persona]) {
+    // Vacío o igual a la tarifa normal: no hace falta guardar override
+    delete datos[dia].pagoCustom[persona];
+  } else {
+    datos[dia].pagoCustom[persona] = valor;
+  }
+  actualizarTotales();
+  autoGuardar();
+}
+
+// DETALLE DE GASTOS
+function toggleDetalleGastos(dia) {
+  const cont = document.getElementById(`gastosDetalle_${dia}`);
+  const abierto = cont.style.display !== 'none';
+  
+  if (abierto) {
+    cont.style.display = 'none';
+    return;
+  }
+  
+  cont.style.display = 'block';
+  if (!datos[dia].gastosDetalle) datos[dia].gastosDetalle = [];
+  if (datos[dia].gastosDetalle.length === 0 && datos[dia].gastos > 0) {
+    // Sugerir el monto manual ya cargado como primer concepto
+    datos[dia].gastosDetalle.push({ concepto: '', monto: datos[dia].gastos });
+  }
+  renderGastosDetalleLista(dia);
+}
+
+function renderGastosDetalleLista(dia) {
+  const lista = document.getElementById(`gastosDetalleLista_${dia}`);
+  if (!lista) return;
+  const items = datos[dia].gastosDetalle || [];
+  lista.innerHTML = items.map((item, idx) => `
+    <div class="gasto-item-row">
+      <input type="text" class="gasto-item-concepto" placeholder="Concepto (ej. gasolina)" 
+             value="${item.concepto || ''}" 
+             oninput="actualizarGastoItem(${dia}, ${idx}, 'concepto', this.value)">
+      <input type="number" class="gasto-item-monto" placeholder="0.00" step="0.01"
+             value="${item.monto || ''}" 
+             oninput="actualizarGastoItem(${dia}, ${idx}, 'monto', this.value)">
+      <button type="button" class="gasto-item-del" onclick="eliminarGastoItem(${dia}, ${idx})">×</button>
+    </div>
+  `).join('');
+}
+
+function agregarGastoItem(dia) {
+  if (!datos[dia].gastosDetalle) datos[dia].gastosDetalle = [];
+  datos[dia].gastosDetalle.push({ concepto: '', monto: 0 });
+  renderGastosDetalleLista(dia);
+}
+
+function actualizarGastoItem(dia, idx, campo, valor) {
+  if (!datos[dia].gastosDetalle || !datos[dia].gastosDetalle[idx]) return;
+  if (campo === 'monto') {
+    datos[dia].gastosDetalle[idx].monto = parseFloat(valor) || 0;
+  } else {
+    datos[dia].gastosDetalle[idx].concepto = valor;
+  }
+  recalcularGastosDesdeDetalle(dia);
+}
+
+function eliminarGastoItem(dia, idx) {
+  datos[dia].gastosDetalle.splice(idx, 1);
+  recalcularGastosDesdeDetalle(dia);
+  renderGastosDetalleLista(dia);
+  
+  if (datos[dia].gastosDetalle.length === 0) {
+    const input = document.getElementById(`gastos_${dia}`);
+    if (input) input.removeAttribute('readonly');
+  }
+}
+
+function recalcularGastosDesdeDetalle(dia) {
+  const items = datos[dia].gastosDetalle || [];
+  const total = items.reduce((sum, it) => sum + (parseFloat(it.monto) || 0), 0);
+  datos[dia].gastos = total;
+  
+  const input = document.getElementById(`gastos_${dia}`);
+  if (input) {
+    input.value = total || '';
+    if (items.length > 0) input.setAttribute('readonly', 'readonly');
+  }
+  
+  const toggle = document.getElementById(`detalleToggle_${dia}`);
+  if (toggle) toggle.textContent = etiquetaDetalleGastos(datos[dia]);
+  
+  actualizarScore(dia);
   actualizarTotales();
   autoGuardar();
 }
@@ -1739,6 +2002,7 @@ function actualizarScore(dia) {
 function actualizarTotales() {
   let ingresoTotal = 0, gastosTotal = 0, serviciosTotal = 0, diasTrabajados = 0;
   let juanDias = 0, reneDias = 0, danielDias = 0;
+  let juanPago = 0, renePago = 0, danielPago = 0;
   const quincenas = {};
   let mejorDia = { dia: 0, ingreso: 0 };
   
@@ -1752,9 +2016,9 @@ function actualizarTotales() {
       serviciosTotal += d.servicios;
       diasTrabajados++;
       
-      if (d.juan) juanDias++;
-      if (d.rene) reneDias++;
-      if (d.daniel) danielDias++;
+      if (d.juan) { juanDias++; juanPago += pagoDelDia(dia, 'juan'); }
+      if (d.rene) { reneDias++; renePago += pagoDelDia(dia, 'rene'); }
+      if (d.daniel) { danielDias++; danielPago += pagoDelDia(dia, 'daniel'); }
       
       if (!quincenas[numQuincena]) quincenas[numQuincena] = 0;
       quincenas[numQuincena] += d.ingreso;
@@ -1765,9 +2029,6 @@ function actualizarTotales() {
     }
   });
   
-  const juanPago = juanDias * salarios.juan;
-  const renePago = reneDias * salarios.rene;
-  const danielPago = danielDias * salarios.daniel;
   const nominaTotal = juanPago + renePago + danielPago;
   const gananciaTotal = ingresoTotal - gastosTotal - nominaTotal;
   
@@ -2038,13 +2299,26 @@ function resetearMes() {
 
 // EXPORTAR/IMPORTAR DATOS
 function exportarDatos() {
-  // Recopilar todos los datos
+  // Recopilar todos los meses guardados en localStorage (no solo el mes abierto)
+  const todosLosMeses = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && /^andrade_\d+_\d+$/.test(key)) {
+      todosLosMeses[key] = JSON.parse(localStorage.getItem(key));
+    }
+  }
+  // Asegurar que el mes actualmente abierto en pantalla quede incluido
+  todosLosMeses[`andrade_${yearActual}_${mesActual}`] = datos;
+  
+  const numMeses = Object.keys(todosLosMeses).length;
+  
   const exportData = {
     version: '2.0',
     fecha: new Date().toISOString(),
     mes: mesActual,
     year: yearActual,
-    datos: datos,
+    datos: datos, // mes actual, por compatibilidad con versiones anteriores
+    todosLosMeses: todosLosMeses,
     salarios: salarios,
     metas: metas
   };
@@ -2069,6 +2343,7 @@ function exportarDatos() {
     
     // Mostrar el código en un alert para copiarlo
     const mensaje = `✅ Datos copiados al portapapeles!\n\n` +
+                   `📅 ${numMeses} mes(es) incluido(s)\n\n` +
                    `También puedes copiar este código:\n\n` +
                    `${base64Data.substring(0, 50)}...\n\n` +
                    `📋 El código completo está en tu portapapeles.\n` +
@@ -2129,10 +2404,23 @@ function importarDatos() {
       actualizarSalariosUI();
     }
     
-    // Importar metas si existen
+    // Importar metas si existen (compatible con tracker anterior que usaba "semanal")
     if (importData.metas) {
-      metas = importData.metas;
+      const metasImportadas = importData.metas;
+      metas = {
+        mensual: metasImportadas.mensual || 1680,
+        quincenal: metasImportadas.quincenal || (metasImportadas.semanal ? metasImportadas.semanal * 2 : 840),
+        diaria: metasImportadas.diaria || 56
+      };
       guardarMetas();
+      
+      // Reflejar las metas importadas en los inputs del tab Metas
+      const inputMensual = document.getElementById('metaMensual');
+      const inputQuincenal = document.getElementById('metaQuincenal');
+      const inputDiaria = document.getElementById('metaDiaria');
+      if (inputMensual) inputMensual.value = metas.mensual;
+      if (inputQuincenal) inputQuincenal.value = metas.quincenal;
+      if (inputDiaria) inputDiaria.value = metas.diaria;
     }
     
     // Guardar y actualizar
@@ -2140,6 +2428,7 @@ function importarDatos() {
     generarDias();
     generarResumenQuincenas();
     actualizarTotales();
+    actualizarMetas();
     
     alert(`✅ Datos importados correctamente!\n\n📊 ${mesNombre} ${importData.year}`);
     
