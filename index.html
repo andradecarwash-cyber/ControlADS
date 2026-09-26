@@ -72,7 +72,7 @@ body {
   right: 0;
   background: white;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
   z-index: 1000;
   padding: 8px 0 8px 0;
@@ -99,7 +99,7 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 40px;
+  width: 28px;
   height: 3px;
   background: transparent;
   border-radius: 0 0 3px 3px;
@@ -115,7 +115,7 @@ body {
 }
 
 .nav-icon {
-  font-size: 20px;
+  font-size: 18px;
   filter: grayscale(100%);
   opacity: 0.6;
   transition: all 0.2s;
@@ -128,13 +128,13 @@ body {
 }
 
 .nav-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  padding: 0 2px;
+  padding: 0 1px;
 }
 
 /* Dashboard Stats */
@@ -435,6 +435,69 @@ body {
   font-weight: 600;
   cursor: pointer;
   margin-top: 4px;
+}
+
+/* Ventas del Día - catálogo de servicios y vehículos */
+.ventas-catalogo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 20px 15px;
+}
+
+.servicio-card {
+  position: relative;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.servicio-card:active {
+  background: #C9A84C;
+  border-color: #C9A84C;
+  transform: scale(0.97);
+}
+
+.servicio-card:active .servicio-card-nombre,
+.servicio-card:active .servicio-card-precio {
+  color: white;
+}
+
+.servicio-card-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+
+.servicio-card-precio {
+  font-size: 18px;
+  font-weight: 700;
+  color: #C9A84C;
+}
+
+.servicio-card-del {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font-size: 15px;
+  color: #ccc;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.vehiculo-card {
+  padding: 14px 10px;
 }
 
 /* Pago del día (override para medio día u otra tarifa) */
@@ -1089,7 +1152,50 @@ body {
 </div>
 
 <!-- TAB 1: RESUMEN -->
-<div id="tab-resumen" class="tab-content active">
+<!-- TAB: VENTAS DEL DÍA -->
+<div id="tab-ventas" class="tab-content active">
+  <div class="dashboard">
+    <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="stat-card highlight">
+        <div class="stat-label">💰 Total del Día</div>
+        <div class="stat-value" id="ventasHoyTotal">$0</div>
+        <div class="stat-sub" id="ventasHoyFecha">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">🔧 Servicios</div>
+        <div class="stat-value" id="ventasHoyCount">0</div>
+        <div class="stat-sub">registrados</div>
+      </div>
+    </div>
+    
+    <div style="padding: 0 20px 10px; text-align:center; font-size:13px; color:#666;">
+      Registrando para el día 
+      <input type="number" id="ventaDiaSelector" min="1" max="31" value="1" 
+             style="width:50px; display:inline-block; padding:6px; border-radius:8px; border:2px solid #e0e0e0; text-align:center; font-weight:700; font-size:14px;"
+             onchange="cambiarDiaVenta()">
+    </div>
+    
+    <div class="section-header">🧾 Toca un servicio para agregarlo</div>
+    <div class="ventas-catalogo" id="catalogoServicios"></div>
+    <div style="padding: 0 20px 15px;">
+      <button class="gastos-add-btn" style="width:100%;" onclick="agregarServicioCatalogo()">+ Agregar servicio al catálogo</button>
+    </div>
+    
+    <div id="panelVehiculo" style="display:none; margin: 0 20px 20px; padding: 16px; background: #fff8e6; border: 2px solid #C9A84C; border-radius: 14px;">
+      <div class="field-label">🚗 ¿Qué vehículo? — <span id="servicioSeleccionadoLabel" style="color:#C9A84C;"></span></div>
+      <div class="ventas-catalogo" id="catalogoVehiculos" style="padding:0; margin-top:10px;"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="gastos-add-btn" style="flex:1;" onclick="agregarVehiculoCatalogo()">+ Agregar tipo</button>
+        <button class="gastos-add-btn" style="flex:1; border-color:#f44336; color:#f44336;" onclick="cancelarVenta()">Cancelar</button>
+      </div>
+    </div>
+    
+    <div class="section-header">📋 Ventas Registradas Hoy</div>
+    <div id="listaVentasHoy" style="padding: 0 20px 20px;"></div>
+  </div>
+</div>
+
+<div id="tab-resumen" class="tab-content">
   <div class="dashboard">
     <!-- Panel Quincena Actual -->
     <div id="panelQuincenaActual"></div>
@@ -1417,7 +1523,11 @@ body {
 
 <!-- Bottom Navigation -->
 <div class="bottom-nav">
-  <button class="nav-item active" onclick="cambiarTab('resumen')">
+  <button class="nav-item active" onclick="cambiarTab('ventas')">
+    <div class="nav-icon">🧾</div>
+    <div class="nav-label">Ventas</div>
+  </button>
+  <button class="nav-item" onclick="cambiarTab('resumen')">
     <div class="nav-icon">📈</div>
     <div class="nav-label">Resumen</div>
   </button>
@@ -1468,8 +1578,18 @@ function getSalario(id) {
 let mesActual = new Date().getMonth(); // Auto-detecta mes actual
 let yearActual = new Date().getFullYear();
 let datos = {};
-let tabActual = 'resumen';
+let tabActual = 'ventas';
 let anticipos = []; // ledger de anticipos/adelantos de clientes, independiente del mes
+let catalogoServicios = [
+  { id: 'bronce', nombre: 'Bronce', precio: 20 }
+];
+let catalogoVehiculos = [
+  { id: 'sedan', nombre: 'Sedán' },
+  { id: 'suv', nombre: 'SUV/Pickup' },
+  { id: 'moto', nombre: 'Motocicleta' }
+];
+let ventaDiaSeleccionado = null; // día del mes actualmente elegido en la pestaña Ventas
+let ventaServicioPendiente = null; // servicio tocado, esperando que se elija el vehículo
 
 // Ayuda para cortes por quincena: Q1 = día 1-15, Q2 = día 16-fin de mes
 function getQuincena(dia) {
@@ -1540,6 +1660,12 @@ function cambiarMes() {
   
   generarDias();
   generarResumenQuincenas();
+  
+  // Si estamos en la pestaña Ventas, recalcular el día por defecto para el nuevo mes
+  ventaDiaSeleccionado = null;
+  if (tabActual === 'ventas') {
+    renderTabVentas();
+  }
 }
 
 function actualizarHeaderMes() {
@@ -1681,14 +1807,16 @@ function cambiarTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   
   // Activate the clicked nav item
-  const tabs = ['resumen', 'dias', 'graficas', 'metas', 'anticipos', 'ajustes'];
+  const tabs = ['ventas', 'resumen', 'dias', 'graficas', 'metas', 'anticipos', 'ajustes'];
   const index = tabs.indexOf(tab);
   if (index !== -1) {
     document.querySelectorAll('.nav-item')[index].classList.add('active');
   }
   
   // Update content when switching tabs
-  if (tab === 'resumen') {
+  if (tab === 'ventas') {
+    renderTabVentas();
+  } else if (tab === 'resumen') {
     generarResumenQuincenas();
     generarPanelQuincenaActual();
     generarPanelProyeccion();
@@ -1717,6 +1845,7 @@ function inicializarMes() {
       gastos: 0,
       gastosDetalle: [],
       servicios: 0,
+      ventasDetalle: [],
       juan: false,
       rene: false,
       daniel: false,
@@ -1790,10 +1919,13 @@ function generarDias() {
       
       <div class="day-fields">
         <div>
-          <div class="field-label">💰 Ingreso</div>
+          <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>💰 Ingreso</span>
+            ${(data.ventasDetalle && data.ventasDetalle.length) ? `<span style="font-size:11px; color:#C9A84C; font-weight:600;">🧾 ${data.ventasDetalle.length} venta(s)</span>` : ''}
+          </div>
           <input type="number" class="field-input" id="ingreso_${dia}" 
                  value="${data.ingreso || ''}" placeholder="$0.00" step="0.01"
-                 oninput="actualizarDia(${dia})">
+                 oninput="actualizarDia(${dia})" ${(data.ventasDetalle && data.ventasDetalle.length) ? 'readonly' : ''}>
         </div>
         
         <div>
@@ -1814,7 +1946,7 @@ function generarDias() {
           <div class="field-label">🔧 Servicios</div>
           <input type="number" class="field-input" id="servicios_${dia}" 
                  value="${data.servicios || ''}" placeholder="0"
-                 oninput="actualizarDia(${dia})">
+                 oninput="actualizarDia(${dia})" ${(data.ventasDetalle && data.ventasDetalle.length) ? 'readonly' : ''}>
         </div>
         
         <div>
@@ -2476,6 +2608,7 @@ function resetearMes() {
     inicializarMes();
     generarDias();
     generarResumenQuincenas();
+    if (tabActual === 'ventas') renderTabVentas();
     alert('✅ Mes reseteado');
   }
 }
@@ -2504,7 +2637,9 @@ function exportarDatos() {
     todosLosMeses: todosLosMeses,
     operarios: operarios,
     metas: metas,
-    anticipos: anticipos
+    anticipos: anticipos,
+    catalogoServicios: catalogoServicios,
+    catalogoVehiculos: catalogoVehiculos
   };
   
   // Convertir a JSON
@@ -2625,6 +2760,16 @@ function importarDatos() {
       renderAnticipos();
     }
     
+    // Importar catálogo de servicios y tipos de vehículo si existen
+    if (importData.catalogoServicios) {
+      catalogoServicios = importData.catalogoServicios;
+      guardarCatalogoServicios();
+    }
+    if (importData.catalogoVehiculos) {
+      catalogoVehiculos = importData.catalogoVehiculos;
+      guardarCatalogoVehiculos();
+    }
+    
     // Importar metas si existen (compatible con tracker anterior que usaba "semanal")
     if (importData.metas) {
       const metasImportadas = importData.metas;
@@ -2650,6 +2795,8 @@ function importarDatos() {
     generarResumenQuincenas();
     actualizarTotales();
     actualizarMetas();
+    ventaDiaSeleccionado = null;
+    if (tabActual === 'ventas') renderTabVentas();
     
     const numMesesImportados = importData.todosLosMeses ? Object.keys(importData.todosLosMeses).length : 1;
     alert(`✅ Datos importados correctamente!\n\n📅 ${numMesesImportados} mes(es) restaurado(s)\n📊 Viendo: ${MESES[mesActual]} ${yearActual}`);
@@ -3086,9 +3233,218 @@ function renderAnticipos() {
   `).join('');
 }
 
+// VENTAS DEL DÍA - registro rápido de servicios
+function cargarCatalogoVentas() {
+  const guardadosServicios = localStorage.getItem('andrade_servicios');
+  if (guardadosServicios) catalogoServicios = JSON.parse(guardadosServicios);
+  const guardadosVehiculos = localStorage.getItem('andrade_tipos_vehiculo');
+  if (guardadosVehiculos) catalogoVehiculos = JSON.parse(guardadosVehiculos);
+}
+
+function guardarCatalogoServicios() {
+  localStorage.setItem('andrade_servicios', JSON.stringify(catalogoServicios));
+}
+
+function guardarCatalogoVehiculos() {
+  localStorage.setItem('andrade_tipos_vehiculo', JSON.stringify(catalogoVehiculos));
+}
+
+function diaVentaActual() {
+  const hoy = new Date();
+  if (mesActual === hoy.getMonth() && yearActual === hoy.getFullYear()) {
+    return hoy.getDate();
+  }
+  return 1;
+}
+
+function cambiarDiaVenta() {
+  const val = parseInt(document.getElementById('ventaDiaSelector').value);
+  const diasEnMes = new Date(yearActual, mesActual + 1, 0).getDate();
+  if (isNaN(val) || val < 1 || val > diasEnMes) {
+    alert('⚠️ Día inválido');
+    document.getElementById('ventaDiaSelector').value = ventaDiaSeleccionado;
+    return;
+  }
+  ventaDiaSeleccionado = val;
+  cancelarVenta();
+  renderTabVentas();
+}
+
+function renderTabVentas() {
+  if (ventaDiaSeleccionado === null) {
+    ventaDiaSeleccionado = diaVentaActual();
+  }
+  const dia = ventaDiaSeleccionado;
+  document.getElementById('ventaDiaSelector').value = dia;
+  
+  const fecha = new Date(yearActual, mesActual, dia);
+  const nombreDia = DIAS_SEMANA[fecha.getDay()];
+  document.getElementById('ventasHoyFecha').textContent = `${nombreDia} ${dia} de ${MESES[mesActual]}`;
+  
+  if (!datos[dia]) {
+    datos[dia] = { abierto: true, ingreso: 0, gastos: 0, gastosDetalle: [], servicios: 0, ventasDetalle: [], juan: false, rene: false, daniel: false, pagoCustom: {} };
+  }
+  if (!datos[dia].ventasDetalle) datos[dia].ventasDetalle = [];
+  
+  const ventas = datos[dia].ventasDetalle;
+  const total = ventas.reduce((s, v) => s + (parseFloat(v.precio) || 0), 0);
+  
+  document.getElementById('ventasHoyTotal').textContent = `$${total.toFixed(2)}`;
+  document.getElementById('ventasHoyCount').textContent = ventas.length;
+  
+  renderCatalogoServicios();
+  renderCatalogoVehiculos();
+  renderListaVentasHoy();
+}
+
+function renderCatalogoServicios() {
+  const cont = document.getElementById('catalogoServicios');
+  if (!cont) return;
+  cont.innerHTML = catalogoServicios.map(s => `
+    <button class="servicio-card" onclick="seleccionarServicio('${s.id}')">
+      <span class="servicio-card-del" onclick="event.stopPropagation(); eliminarServicioCatalogo('${s.id}')">×</span>
+      <span class="servicio-card-nombre">${s.nombre}</span>
+      <span class="servicio-card-precio">$${s.precio}</span>
+    </button>
+  `).join('');
+}
+
+function renderCatalogoVehiculos() {
+  const cont = document.getElementById('catalogoVehiculos');
+  if (!cont) return;
+  cont.innerHTML = catalogoVehiculos.map(v => `
+    <button class="servicio-card vehiculo-card" onclick="confirmarVenta('${v.id}')">
+      <span class="servicio-card-del" onclick="event.stopPropagation(); eliminarVehiculoCatalogo('${v.id}')">×</span>
+      <span class="servicio-card-nombre">${v.nombre}</span>
+    </button>
+  `).join('');
+}
+
+function seleccionarServicio(id) {
+  const s = catalogoServicios.find(x => x.id === id);
+  if (!s) return;
+  ventaServicioPendiente = s;
+  document.getElementById('servicioSeleccionadoLabel').textContent = `${s.nombre} ($${s.precio})`;
+  document.getElementById('panelVehiculo').style.display = 'block';
+}
+
+function cancelarVenta() {
+  ventaServicioPendiente = null;
+  const panel = document.getElementById('panelVehiculo');
+  if (panel) panel.style.display = 'none';
+}
+
+function confirmarVenta(vehiculoId) {
+  if (!ventaServicioPendiente) return;
+  const vehiculo = catalogoVehiculos.find(v => v.id === vehiculoId);
+  const dia = ventaDiaSeleccionado;
+  
+  if (!datos[dia].ventasDetalle) datos[dia].ventasDetalle = [];
+  
+  datos[dia].ventasDetalle.push({
+    servicio: ventaServicioPendiente.nombre,
+    precio: ventaServicioPendiente.precio,
+    vehiculo: vehiculo ? vehiculo.nombre : '',
+    hora: new Date().toTimeString().slice(0, 5)
+  });
+  
+  datos[dia].abierto = true;
+  recalcularVentasDesdeDetalle(dia);
+  
+  cancelarVenta();
+  renderTabVentas();
+  autoGuardar();
+}
+
+function recalcularVentasDesdeDetalle(dia) {
+  const items = datos[dia].ventasDetalle || [];
+  const total = items.reduce((s, v) => s + (parseFloat(v.precio) || 0), 0);
+  datos[dia].ingreso = total;
+  datos[dia].servicios = items.length;
+  actualizarTotales();
+}
+
+function renderListaVentasHoy() {
+  const cont = document.getElementById('listaVentasHoy');
+  if (!cont) return;
+  const dia = ventaDiaSeleccionado;
+  const ventas = (datos[dia] && datos[dia].ventasDetalle) || [];
+  
+  if (ventas.length === 0) {
+    cont.innerHTML = `<div style="text-align:center; padding:20px; color:#999;">Aún no hay ventas registradas este día</div>`;
+    return;
+  }
+  
+  cont.innerHTML = ventas.map((v, idx) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:white; border-radius:10px; padding:12px 15px; margin-bottom:8px; box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+      <span style="color:#333;">
+        <strong>${v.servicio}</strong>${v.vehiculo ? ` · ${v.vehiculo}` : ''}
+        ${v.hora ? `<br><span style="font-size:11px; color:#999;">${v.hora}</span>` : ''}
+      </span>
+      <span style="display:flex; align-items:center; gap:10px;">
+        <strong style="color:#0a0f18;">$${parseFloat(v.precio).toFixed(2)}</strong>
+        <button onclick="eliminarVenta(${idx})" style="background:#f44336; color:white; border:none; border-radius:6px; width:26px; height:26px; font-size:14px; cursor:pointer;">×</button>
+      </span>
+    </div>
+  `).join('');
+}
+
+function eliminarVenta(idx) {
+  const dia = ventaDiaSeleccionado;
+  if (!confirm('¿Eliminar esta venta del registro?')) return;
+  datos[dia].ventasDetalle.splice(idx, 1);
+  recalcularVentasDesdeDetalle(dia);
+  renderTabVentas();
+  autoGuardar();
+}
+
+function agregarServicioCatalogo() {
+  const nombre = prompt('Nombre del servicio (ej. Plata, Oro, Encerado):');
+  if (!nombre || !nombre.trim()) return;
+  const precioStr = prompt(`Precio de "${nombre.trim()}":`, '25');
+  const precio = parseFloat(precioStr);
+  if (isNaN(precio) || precio <= 0) {
+    alert('⚠️ Ingresa un precio válido');
+    return;
+  }
+  const id = 'srv_' + Date.now().toString(36);
+  catalogoServicios.push({ id, nombre: nombre.trim(), precio });
+  guardarCatalogoServicios();
+  renderCatalogoServicios();
+}
+
+function eliminarServicioCatalogo(id) {
+  const s = catalogoServicios.find(x => x.id === id);
+  if (!s) return;
+  if (!confirm(`¿Quitar "${s.nombre}" del catálogo?\n\nLas ventas ya registradas no se borran.`)) return;
+  catalogoServicios = catalogoServicios.filter(x => x.id !== id);
+  guardarCatalogoServicios();
+  renderCatalogoServicios();
+}
+
+function agregarVehiculoCatalogo() {
+  const nombre = prompt('Nombre del tipo de vehículo (ej. Camión, Panel):');
+  if (!nombre || !nombre.trim()) return;
+  const id = 'veh_' + Date.now().toString(36);
+  catalogoVehiculos.push({ id, nombre: nombre.trim() });
+  guardarCatalogoVehiculos();
+  renderCatalogoVehiculos();
+}
+
+function eliminarVehiculoCatalogo(id) {
+  const v = catalogoVehiculos.find(x => x.id === id);
+  if (!v) return;
+  if (!confirm(`¿Quitar "${v.nombre}" del catálogo?`)) return;
+  catalogoVehiculos = catalogoVehiculos.filter(x => x.id !== id);
+  guardarCatalogoVehiculos();
+  renderCatalogoVehiculos();
+}
+
 window.onload = function() {
   cargarSalarios();
   cargarMetas();
+  cargarCatalogoVentas();
+  cargarAnticipos();
   
   // Establecer mes actual en el selector
   document.getElementById('mesSelector').value = mesActual;
@@ -3106,6 +3462,7 @@ window.onload = function() {
   generarResumenQuincenas();
   generarGraficas();
   actualizarMetas();
+  renderTabVentas();
   
   // Auto-expandir quincena actual
   setTimeout(() => {
