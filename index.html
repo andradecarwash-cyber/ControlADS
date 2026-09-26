@@ -72,7 +72,7 @@ body {
   right: 0;
   background: white;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
   z-index: 1000;
   padding: 8px 0 8px 0;
@@ -115,7 +115,7 @@ body {
 }
 
 .nav-icon {
-  font-size: 22px;
+  font-size: 20px;
   filter: grayscale(100%);
   opacity: 0.6;
   transition: all 0.2s;
@@ -128,8 +128,13 @@ body {
 }
 
 .nav-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 2px;
 }
 
 /* Dashboard Stats */
@@ -276,7 +281,7 @@ body {
 }
 
 .quincena-content.expanded {
-  max-height: 5000px;
+  max-height: 50000px;
 }
 
 /* Day Card */
@@ -1143,53 +1148,7 @@ body {
   <div class="settings-container">
     <div class="section-header">💰 NÓMINA</div>
     
-    <div class="payroll-card">
-      <h3>Juan (Supervisor)</h3>
-      <div class="payroll-row">
-        <span>Días trabajados:</span>
-        <span id="juanDias">0</span>
-      </div>
-      <div class="payroll-row editable" onclick="editarSalario('juan')">
-        <span>Pago por día:</span>
-        <span class="payroll-value" id="juanSalario">$30</span>
-      </div>
-      <div class="payroll-row total">
-        <span>Total a pagar:</span>
-        <span id="juanPago">$0</span>
-      </div>
-    </div>
-    
-    <div class="payroll-card">
-      <h3>René (Operario)</h3>
-      <div class="payroll-row">
-        <span>Días trabajados:</span>
-        <span id="reneDias">0</span>
-      </div>
-      <div class="payroll-row editable" onclick="editarSalario('rene')">
-        <span>Pago por día:</span>
-        <span class="payroll-value" id="reneSalario">$40</span>
-      </div>
-      <div class="payroll-row total">
-        <span>Total a pagar:</span>
-        <span id="renePago">$0</span>
-      </div>
-    </div>
-    
-    <div class="payroll-card">
-      <h3>Daniel (Operario)</h3>
-      <div class="payroll-row">
-        <span>Días trabajados:</span>
-        <span id="danielDias">0</span>
-      </div>
-      <div class="payroll-row editable" onclick="editarSalario('daniel')">
-        <span>Pago por día:</span>
-        <span class="payroll-value" id="danielSalario">$40</span>
-      </div>
-      <div class="payroll-row total">
-        <span>Total a pagar:</span>
-        <span id="danielPago">$0</span>
-      </div>
-    </div>
+    <div id="nominaOperarios"></div>
     
     <div class="payroll-total-card">
       <div class="payroll-total-row">
@@ -1199,7 +1158,7 @@ body {
     </div>
     
     <div class="hint">
-      💡 Toca "Pago por día" para editar salarios
+      💡 Toca "Pago por día" para editar salarios, o "🗑️" para quitar a alguien del equipo
     </div>
     
     <div class="settings-group" style="margin-top: 30px;">
@@ -1399,6 +1358,63 @@ body {
   </div>
 </div>
 
+<!-- TAB: ANTICIPOS -->
+<div id="tab-anticipos" class="tab-content">
+  <div class="dashboard">
+    <div class="stats-grid">
+      <div class="stat-card highlight">
+        <div class="stat-label">⏳ Por Cobrar</div>
+        <div class="stat-value" id="anticiposPendienteTotal">$0</div>
+        <div class="stat-sub" id="anticiposPendienteCount">0 pendientes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">✅ Cobrados</div>
+        <div class="stat-value" id="anticiposCompletadosTotal">$0</div>
+        <div class="stat-sub" id="anticiposCompletadosCount">0 completados</div>
+      </div>
+    </div>
+    
+    <div class="settings-group">
+      <h3>➕ Nuevo Anticipo</h3>
+      <div class="day-fields">
+        <div>
+          <div class="field-label">👤 Cliente</div>
+          <input type="text" class="field-input" id="anticipoCliente" placeholder="Nombre del cliente" style="text-align:left;">
+        </div>
+        <div>
+          <div class="field-label">📞 Teléfono</div>
+          <input type="tel" class="field-input" id="anticipoTelefono" placeholder="0000-0000" style="text-align:left;">
+        </div>
+        <div>
+          <div class="field-label">🔧 Servicio (opcional)</div>
+          <input type="text" class="field-input" id="anticipoServicio" placeholder="Ej. Lavado completo" style="text-align:left;">
+        </div>
+        <div class="goal-input-group">
+          <div>
+            <div class="field-label">💵 Monto Total</div>
+            <input type="number" class="field-input" id="anticipoTotal" placeholder="$0.00" step="0.01" oninput="calcularPendienteForm()">
+          </div>
+          <div>
+            <div class="field-label">✅ Anticipo Recibido</div>
+            <input type="number" class="field-input" id="anticipoRecibido" placeholder="$0.00" step="0.01" oninput="calcularPendienteForm()">
+          </div>
+        </div>
+        <div style="text-align:center; padding:12px; background:#fafafa; border-radius:10px; font-size:14px; color:#666;">
+          Pendiente por cobrar: <strong id="anticipoPendientePreview" style="color:#C9A84C;">$0.00</strong>
+        </div>
+        <div>
+          <div class="field-label">📅 Fecha del Servicio (opcional)</div>
+          <input type="date" class="field-input" id="anticipoFecha" style="text-align:left;">
+        </div>
+        <button class="btn btn-primary" onclick="agregarAnticipo()">➕ Guardar Anticipo</button>
+      </div>
+    </div>
+    
+    <div class="section-header">📋 Anticipos Registrados</div>
+    <div id="listaAnticipos" style="padding: 0 20px 20px;"></div>
+  </div>
+</div>
+
 <!-- Bottom Navigation -->
 <div class="bottom-nav">
   <button class="nav-item active" onclick="cambiarTab('resumen')">
@@ -1417,6 +1433,10 @@ body {
     <div class="nav-icon">🎯</div>
     <div class="nav-label">Metas</div>
   </button>
+  <button class="nav-item" onclick="cambiarTab('anticipos')">
+    <div class="nav-icon">💵</div>
+    <div class="nav-label">Anticipos</div>
+  </button>
   <button class="nav-item" onclick="cambiarTab('ajustes')">
     <div class="nav-icon">⚙️</div>
     <div class="nav-label">Más</div>
@@ -1431,11 +1451,25 @@ const META_MENSUAL = 1680;
 const META_QUINCENAL = 840;
 const META_DIARIA = 56;
 
-let salarios = { juan: 30, rene: 40, daniel: 40 };
+let operarios = [
+  { id: 'juan', nombre: 'Juan', salario: 30, rol: 'Supervisor', activo: true },
+  { id: 'rene', nombre: 'René', salario: 40, rol: 'Operario', activo: true },
+  { id: 'daniel', nombre: 'Daniel', salario: 40, rol: 'Operario', activo: true }
+];
+
+function getOperario(id) {
+  return operarios.find(o => o.id === id);
+}
+
+function getSalario(id) {
+  const op = getOperario(id);
+  return op ? op.salario : 0;
+}
 let mesActual = new Date().getMonth(); // Auto-detecta mes actual
 let yearActual = new Date().getFullYear();
 let datos = {};
 let tabActual = 'resumen';
+let anticipos = []; // ledger de anticipos/adelantos de clientes, independiente del mes
 
 // Ayuda para cortes por quincena: Q1 = día 1-15, Q2 = día 16-fin de mes
 function getQuincena(dia) {
@@ -1458,12 +1492,19 @@ function pagoDelDia(dia, persona) {
   if (d.pagoCustom && d.pagoCustom[persona] !== undefined && d.pagoCustom[persona] !== null) {
     return parseFloat(d.pagoCustom[persona]) || 0;
   }
-  return salarios[persona];
+  return getSalario(persona);
 }
 
 function etiquetaDetalleGastos(data) {
   const items = data.gastosDetalle || [];
   return items.length ? `📝 ${items.length} concepto${items.length > 1 ? 's' : ''}` : '📝 Detallar';
+}
+
+// Operarios a mostrar como botón en el día: los activos, más cualquier inactivo
+// que ya estaba marcado ese día específico (para no perder la posibilidad de corregirlo)
+function operariosVisiblesEnDia(dia) {
+  const d = datos[dia] || {};
+  return operarios.filter(op => op.activo || d[op.id]);
 }
 
 function filaPagoHTML(dia, persona, nombre) {
@@ -1506,35 +1547,125 @@ function actualizarHeaderMes() {
 }
 
 function cargarSalarios() {
-  const guardados = localStorage.getItem('andrade_salarios');
-  if (guardados) {
-    salarios = JSON.parse(guardados);
+  const guardadosOperarios = localStorage.getItem('andrade_operarios');
+  if (guardadosOperarios) {
+    operarios = JSON.parse(guardadosOperarios);
+  } else {
+    // Compatibilidad con versión anterior que guardaba solo { juan, rene, daniel }
+    const guardadosViejo = localStorage.getItem('andrade_salarios');
+    if (guardadosViejo) {
+      const viejo = JSON.parse(guardadosViejo);
+      operarios.forEach(op => {
+        if (viejo[op.id] !== undefined) op.salario = viejo[op.id];
+      });
+      guardarSalarios();
+    }
   }
-  actualizarSalariosUI();
+  renderNominaOperarios();
 }
 
 function guardarSalarios() {
-  localStorage.setItem('andrade_salarios', JSON.stringify(salarios));
+  localStorage.setItem('andrade_operarios', JSON.stringify(operarios));
 }
 
-function actualizarSalariosUI() {
-  document.getElementById('juanSalario').textContent = `$${salarios.juan}`;
-  document.getElementById('reneSalario').textContent = `$${salarios.rene}`;
-  document.getElementById('danielSalario').textContent = `$${salarios.daniel}`;
+function renderNominaOperarios() {
+  const cont = document.getElementById('nominaOperarios');
+  if (!cont) return;
+  
+  // Mostrar activos, más cualquier inactivo que tenga días trabajados este mes (para no perder el registro)
+  const visibles = operarios.filter(op => op.activo || diasTrabajadosOperario(op.id) > 0);
+  
+  cont.innerHTML = visibles.map(op => `
+    <div class="payroll-card">
+      <h3>
+        ${op.nombre}${op.rol ? ` (${op.rol})` : ''}
+        ${!op.activo ? ' <span style="font-size:11px; opacity:0.6; font-weight:400;">· inactivo</span>' : ''}
+        <button onclick="eliminarOperario('${op.id}')" style="float:right; background:none; border:none; color:#f44336; font-size:15px; cursor:pointer;">🗑️</button>
+      </h3>
+      <div class="payroll-row">
+        <span>Días trabajados:</span>
+        <span id="dias_${op.id}">0</span>
+      </div>
+      <div class="payroll-row editable" onclick="editarSalario('${op.id}')">
+        <span>Pago por día:</span>
+        <span class="payroll-value" id="salario_${op.id}">$${op.salario}</span>
+      </div>
+      <div class="payroll-row total">
+        <span>Total a pagar:</span>
+        <span id="pago_total_${op.id}">$0</span>
+      </div>
+    </div>
+  `).join('');
+  
+  const btnAgregar = document.getElementById('btnAgregarOperario');
+  if (!btnAgregar) {
+    const btn = document.createElement('button');
+    btn.id = 'btnAgregarOperario';
+    btn.className = 'btn btn-secondary';
+    btn.textContent = '➕ Agregar Colaborador';
+    btn.onclick = agregarOperario;
+    cont.parentElement.insertBefore(btn, cont.nextSibling);
+  }
 }
 
-function editarSalario(persona) {
-  const nombres = { juan: 'Juan', rene: 'René', daniel: 'Daniel' };
-  const nuevoSalario = prompt(`Nuevo salario por día para ${nombres[persona]}:`, salarios[persona]);
+// Cuenta días trabajados por un operario en el mes actualmente abierto (para saber si sigue teniendo registros aunque esté inactivo)
+function diasTrabajadosOperario(id) {
+  let dias = 0;
+  Object.keys(datos).forEach(dia => {
+    if (datos[dia].abierto && datos[dia][id]) dias++;
+  });
+  return dias;
+}
+
+function agregarOperario() {
+  const nombre = prompt('Nombre del nuevo colaborador:');
+  if (!nombre || !nombre.trim()) return;
+  
+  const salarioStr = prompt(`Pago por día para ${nombre.trim()}:`, '30');
+  const salario = parseFloat(salarioStr);
+  if (isNaN(salario) || salario <= 0) {
+    alert('⚠️ Ingresa un salario válido');
+    return;
+  }
+  
+  const id = 'op_' + Date.now().toString(36);
+  operarios.push({ id, nombre: nombre.trim(), salario, rol: 'Operario', activo: true });
+  guardarSalarios();
+  renderNominaOperarios();
+  generarDias(); // refresca los botones "Quién trabajó" en cada día
+  actualizarTotales();
+  alert(`✅ ${nombre.trim()} agregado al equipo`);
+}
+
+function eliminarOperario(id) {
+  const op = getOperario(id);
+  if (!op) return;
+  
+  if (!confirm(`¿Quitar a ${op.nombre} del equipo?\n\nSus días y pagos ya registrados este mes NO se borran, solo dejará de aparecer como opción en días nuevos.`)) {
+    return;
+  }
+  
+  op.activo = false;
+  guardarSalarios();
+  renderNominaOperarios();
+  generarDias(); // refresca los botones "Quién trabajó" en cada día
+  actualizarTotales();
+}
+
+function editarSalario(id) {
+  const op = getOperario(id);
+  if (!op) return;
+  
+  const nuevoSalario = prompt(`Nuevo salario por día para ${op.nombre}:`, op.salario);
   
   if (nuevoSalario !== null && nuevoSalario !== '') {
     const valor = parseFloat(nuevoSalario);
     if (!isNaN(valor) && valor > 0) {
-      salarios[persona] = valor;
+      op.salario = valor;
       guardarSalarios();
-      actualizarSalariosUI();
+      renderNominaOperarios();
       actualizarTotales();
-      alert(`✅ Salario de ${nombres[persona]} actualizado a $${valor}/día`);
+      alert(`✅ Salario de ${op.nombre} actualizado a $${valor}/día`);
     } else {
       alert('⚠️ Ingresa un número válido');
     }
@@ -1550,7 +1681,7 @@ function cambiarTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   
   // Activate the clicked nav item
-  const tabs = ['resumen', 'dias', 'graficas', 'metas', 'ajustes'];
+  const tabs = ['resumen', 'dias', 'graficas', 'metas', 'anticipos', 'ajustes'];
   const index = tabs.indexOf(tab);
   if (index !== -1) {
     document.querySelectorAll('.nav-item')[index].classList.add('active');
@@ -1569,6 +1700,8 @@ function cambiarTab(tab) {
     generarGraficas();
   } else if (tab === 'metas') {
     actualizarMetas();
+  } else if (tab === 'anticipos') {
+    renderAnticipos();
   }
 }
 
@@ -1686,16 +1819,14 @@ function generarDias() {
         
         <div>
           <div class="field-label">👥 Quién trabajó</div>
-          <div class="team-grid">
-            <button class="team-btn ${data.juan ? 'active' : ''}" id="juan_${dia}" onclick="toggleTeam(${dia}, 'juan')">Juan</button>
-            <button class="team-btn ${data.rene ? 'active' : ''}" id="rene_${dia}" onclick="toggleTeam(${dia}, 'rene')">René</button>
-            <button class="team-btn ${data.daniel ? 'active' : ''}" id="daniel_${dia}" onclick="toggleTeam(${dia}, 'daniel')">Daniel</button>
+          <div class="team-grid" id="teamGrid_${dia}" style="grid-template-columns: repeat(${Math.min(operariosVisiblesEnDia(dia).length, 3) || 1}, 1fr);">
+            ${operariosVisiblesEnDia(dia).map(op => `<button class="team-btn ${data[op.id] ? 'active' : ''}" id="${op.id}_${dia}" onclick="toggleTeam(${dia}, '${op.id}')">${op.nombre}</button>`).join('')}
           </div>
         </div>
         
-        <div id="pagoDetalle_${dia}" style="${(data.juan || data.rene || data.daniel) ? '' : 'display:none;'}">
+        <div id="pagoDetalle_${dia}" style="${operarios.some(op => data[op.id]) ? '' : 'display:none;'}">
           <div class="field-label">💵 Pago del día <span class="pago-dia-hint">(edita si no trabajó el día completo)</span></div>
-          <div class="pago-dia-grid" id="pagoDiaGrid_${dia}">${filaPagoHTML(dia, 'juan', 'Juan') + filaPagoHTML(dia, 'rene', 'René') + filaPagoHTML(dia, 'daniel', 'Daniel')}</div>
+          <div class="pago-dia-grid" id="pagoDiaGrid_${dia}">${operarios.map(op => filaPagoHTML(dia, op.id, op.nombre)).join('')}</div>
         </div>
         
         <div class="score" id="score_${dia}">-</div>
@@ -1742,6 +1873,30 @@ function scrollAlDiaDeHoy() {
   }, 300);
 }
 
+function desglosarGastosQuincena(inicio, fin) {
+  const filas = [];
+  for (let dia = inicio; dia <= fin; dia++) {
+    const d = datos[dia];
+    if (!d || !d.abierto || !d.gastos) continue;
+    if (d.gastosDetalle && d.gastosDetalle.length > 0) {
+      d.gastosDetalle.forEach(item => {
+        if (item.monto) {
+          filas.push({ dia, concepto: item.concepto && item.concepto.trim() ? item.concepto : '(sin concepto)', monto: parseFloat(item.monto) || 0 });
+        }
+      });
+    } else {
+      filas.push({ dia, concepto: 'Gasto general', monto: d.gastos });
+    }
+  }
+  return filas;
+}
+
+function toggleGastosQuincena(q) {
+  const el = document.getElementById(`gastosQuincenaDetalle_${q}`);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
 function generarResumenQuincenas() {
   const container = document.getElementById('resumenQuincenas');
   container.innerHTML = '';
@@ -1749,23 +1904,46 @@ function generarResumenQuincenas() {
   for (let q = 1; q <= 2; q++) {
     const { inicio, fin } = rangoQuincena(q);
     
-    let ventas = 0, gastos = 0, juanDias = 0, reneDias = 0, danielDias = 0;
-    let juanPago = 0, renePago = 0, danielPago = 0;
+    let ventas = 0, gastos = 0;
+    const pagoPorOperario = {};
+    operarios.forEach(op => { pagoPorOperario[op.id] = { dias: 0, pago: 0 }; });
     
     for (let dia = inicio; dia <= fin; dia++) {
       const d = datos[dia];
       if (d && d.abierto) {
         ventas += d.ingreso;
         gastos += d.gastos;
-        if (d.juan) { juanDias++; juanPago += pagoDelDia(dia, 'juan'); }
-        if (d.rene) { reneDias++; renePago += pagoDelDia(dia, 'rene'); }
-        if (d.daniel) { danielDias++; danielPago += pagoDelDia(dia, 'daniel'); }
+        operarios.forEach(op => {
+          if (d[op.id]) {
+            pagoPorOperario[op.id].dias++;
+            pagoPorOperario[op.id].pago += pagoDelDia(dia, op.id);
+          }
+        });
       }
     }
     
-    const nomina = juanPago + renePago + danielPago;
+    const nomina = Object.values(pagoPorOperario).reduce((s, p) => s + p.pago, 0);
     const ganancia = ventas - gastos - nomina;
     const pct = (ventas / META_QUINCENAL * 100).toFixed(0);
+    
+    const filasOperarios = operarios
+      .filter(op => pagoPorOperario[op.id].dias > 0)
+      .map(op => `
+        <div class="payroll-row">
+          <span>👤 ${op.nombre}</span>
+          <span>${pagoPorOperario[op.id].dias}d · $${pagoPorOperario[op.id].pago.toFixed(0)}</span>
+        </div>
+      `).join('');
+    
+    const desglose = desglosarGastosQuincena(inicio, fin);
+    const desgloseHTML = desglose.length 
+      ? desglose.map(f => `
+          <div class="payroll-row" style="font-size:12px; opacity:0.85; border-color: rgba(255,255,255,0.15);">
+            <span>Día ${f.dia} · ${f.concepto}</span>
+            <span>$${f.monto.toFixed(2)}</span>
+          </div>
+        `).join('')
+      : `<div class="payroll-row" style="font-size:12px; opacity:0.6; border-color: rgba(255,255,255,0.15);"><span>Sin gastos registrados</span><span></span></div>`;
     
     const card = document.createElement('div');
     card.className = 'payroll-card';
@@ -1776,22 +1954,14 @@ function generarResumenQuincenas() {
         <span>💰 Ventas</span>
         <span>$${ventas.toFixed(0)} <span style="opacity:0.6; font-size:11px;">(${pct}% meta)</span></span>
       </div>
-      <div class="payroll-row">
-        <span>📉 Gastos</span>
+      <div class="payroll-row" style="cursor:pointer;" onclick="toggleGastosQuincena(${q})">
+        <span>📉 Gastos <span style="font-size:10px; opacity:0.7;">▼ ver detalle</span></span>
         <span>$${gastos.toFixed(0)}</span>
       </div>
-      <div class="payroll-row">
-        <span>👤 Juan</span>
-        <span>${juanDias}d · $${juanPago.toFixed(0)}</span>
+      <div id="gastosQuincenaDetalle_${q}" style="display:none; margin: -4px 0 4px 0;">
+        ${desgloseHTML}
       </div>
-      <div class="payroll-row">
-        <span>👤 René</span>
-        <span>${reneDias}d · $${renePago.toFixed(0)}</span>
-      </div>
-      <div class="payroll-row">
-        <span>👤 Daniel</span>
-        <span>${danielDias}d · $${danielPago.toFixed(0)}</span>
-      </div>
+      ${filasOperarios}
       <div class="payroll-row">
         <span>💵 Nómina Total</span>
         <span>$${nomina.toFixed(0)}</span>
@@ -1830,25 +2000,34 @@ function toggleDia(dia) {
 function toggleTeam(dia, persona) {
   datos[dia][persona] = !datos[dia][persona];
   const btn = document.getElementById(`${persona}_${dia}`);
-  btn.className = `team-btn ${datos[dia][persona] ? 'active' : ''}`;
+  if (btn) btn.className = `team-btn ${datos[dia][persona] ? 'active' : ''}`;
   
   // Si se desactiva, limpiar cualquier pago personalizado de ese día para esa persona
   if (!datos[dia][persona] && datos[dia].pagoCustom) {
     delete datos[dia].pagoCustom[persona];
   }
   
+  renderTeamGrid(dia);
   renderPagoDelDia(dia);
   actualizarTotales();
   autoGuardar();
+}
+
+function renderTeamGrid(dia) {
+  const grid = document.getElementById(`teamGrid_${dia}`);
+  if (!grid) return;
+  const visibles = operariosVisiblesEnDia(dia);
+  grid.style.gridTemplateColumns = `repeat(${Math.min(visibles.length, 3) || 1}, 1fr)`;
+  grid.innerHTML = visibles.map(op => `<button class="team-btn ${datos[dia][op.id] ? 'active' : ''}" id="${op.id}_${dia}" onclick="toggleTeam(${dia}, '${op.id}')">${op.nombre}</button>`).join('');
 }
 
 function renderPagoDelDia(dia) {
   const cont = document.getElementById(`pagoDetalle_${dia}`);
   const grid = document.getElementById(`pagoDiaGrid_${dia}`);
   if (!cont || !grid) return;
-  const algunoActivo = datos[dia].juan || datos[dia].rene || datos[dia].daniel;
+  const algunoActivo = operarios.some(op => datos[dia][op.id]);
   cont.style.display = algunoActivo ? '' : 'none';
-  grid.innerHTML = filaPagoHTML(dia, 'juan', 'Juan') + filaPagoHTML(dia, 'rene', 'René') + filaPagoHTML(dia, 'daniel', 'Daniel');
+  grid.innerHTML = operarios.map(op => filaPagoHTML(dia, op.id, op.nombre)).join('');
 }
 
 function actualizarPagoDia(dia, persona) {
@@ -1856,7 +2035,7 @@ function actualizarPagoDia(dia, persona) {
   const valor = parseFloat(input.value);
   if (!datos[dia].pagoCustom) datos[dia].pagoCustom = {};
   
-  if (isNaN(valor) || valor === salarios[persona]) {
+  if (isNaN(valor) || valor === getSalario(persona)) {
     // Vacío o igual a la tarifa normal: no hace falta guardar override
     delete datos[dia].pagoCustom[persona];
   } else {
@@ -2001,8 +2180,8 @@ function actualizarScore(dia) {
 
 function actualizarTotales() {
   let ingresoTotal = 0, gastosTotal = 0, serviciosTotal = 0, diasTrabajados = 0;
-  let juanDias = 0, reneDias = 0, danielDias = 0;
-  let juanPago = 0, renePago = 0, danielPago = 0;
+  const pagoPorOperario = {}; // { id: { dias, pago } }
+  operarios.forEach(op => { pagoPorOperario[op.id] = { dias: 0, pago: 0 }; });
   const quincenas = {};
   let mejorDia = { dia: 0, ingreso: 0 };
   
@@ -2016,9 +2195,13 @@ function actualizarTotales() {
       serviciosTotal += d.servicios;
       diasTrabajados++;
       
-      if (d.juan) { juanDias++; juanPago += pagoDelDia(dia, 'juan'); }
-      if (d.rene) { reneDias++; renePago += pagoDelDia(dia, 'rene'); }
-      if (d.daniel) { danielDias++; danielPago += pagoDelDia(dia, 'daniel'); }
+      operarios.forEach(op => {
+        if (d[op.id]) {
+          if (!pagoPorOperario[op.id]) pagoPorOperario[op.id] = { dias: 0, pago: 0 };
+          pagoPorOperario[op.id].dias++;
+          pagoPorOperario[op.id].pago += pagoDelDia(dia, op.id);
+        }
+      });
       
       if (!quincenas[numQuincena]) quincenas[numQuincena] = 0;
       quincenas[numQuincena] += d.ingreso;
@@ -2029,7 +2212,7 @@ function actualizarTotales() {
     }
   });
   
-  const nominaTotal = juanPago + renePago + danielPago;
+  const nominaTotal = Object.values(pagoPorOperario).reduce((s, p) => s + p.pago, 0);
   const gananciaTotal = ingresoTotal - gastosTotal - nominaTotal;
   
   document.getElementById('ingresoTotal').textContent = `$${ingresoTotal.toFixed(0)}`;
@@ -2047,12 +2230,12 @@ function actualizarTotales() {
   const pctNomina = ingresoTotal > 0 ? (nominaTotal / ingresoTotal * 100).toFixed(0) : 0;
   document.getElementById('pctNomina').textContent = `${pctNomina}% del ingreso`;
   
-  document.getElementById('juanDias').textContent = juanDias;
-  document.getElementById('juanPago').textContent = `$${juanPago.toFixed(0)}`;
-  document.getElementById('reneDias').textContent = reneDias;
-  document.getElementById('renePago').textContent = `$${renePago.toFixed(0)}`;
-  document.getElementById('danielDias').textContent = danielDias;
-  document.getElementById('danielPago').textContent = `$${danielPago.toFixed(0)}`;
+  Object.keys(pagoPorOperario).forEach(id => {
+    const diasEl = document.getElementById(`dias_${id}`);
+    const pagoEl = document.getElementById(`pago_total_${id}`);
+    if (diasEl) diasEl.textContent = pagoPorOperario[id].dias;
+    if (pagoEl) pagoEl.textContent = `$${pagoPorOperario[id].pago.toFixed(0)}`;
+  });
   document.getElementById('nominaTotalModal').textContent = `$${nominaTotal.toFixed(0)}`;
   
   // Settings
@@ -2313,14 +2496,15 @@ function exportarDatos() {
   const numMeses = Object.keys(todosLosMeses).length;
   
   const exportData = {
-    version: '2.0',
+    version: '3.0',
     fecha: new Date().toISOString(),
     mes: mesActual,
     year: yearActual,
     datos: datos, // mes actual, por compatibilidad con versiones anteriores
     todosLosMeses: todosLosMeses,
-    salarios: salarios,
-    metas: metas
+    operarios: operarios,
+    metas: metas,
+    anticipos: anticipos
   };
   
   // Convertir a JSON
@@ -2394,14 +2578,51 @@ function importarDatos() {
     
     if (!confirmar) return;
     
-    // Importar datos
-    datos = importData.datos;
+    // Importar todos los meses incluidos en el paquete (si los hay)
+    if (importData.todosLosMeses) {
+      Object.keys(importData.todosLosMeses).forEach(key => {
+        localStorage.setItem(key, JSON.stringify(importData.todosLosMeses[key]));
+      });
+      
+      // Cargar el mes que está actualmente abierto en pantalla, si vino incluido;
+      // si no, cargar el mes que traía el export y mover el selector a ese mes
+      const claveActual = `andrade_${yearActual}_${mesActual}`;
+      if (importData.todosLosMeses[claveActual]) {
+        datos = importData.todosLosMeses[claveActual];
+      } else {
+        datos = importData.datos;
+        mesActual = importData.mes;
+        yearActual = importData.year;
+        document.getElementById('mesSelector').value = mesActual;
+        actualizarHeaderMes();
+      }
+    } else {
+      // Compatibilidad con exportaciones antiguas de un solo mes
+      datos = importData.datos;
+    }
     
-    // Importar salarios si existen
-    if (importData.salarios) {
-      salarios = importData.salarios;
+    // Importar operarios si existen (compatible con tracker anterior que usaba "salarios" fijo)
+    if (importData.operarios) {
+      operarios = importData.operarios;
       guardarSalarios();
-      actualizarSalariosUI();
+      renderNominaOperarios();
+    } else if (importData.salarios) {
+      const viejo = importData.salarios;
+      operarios.forEach(op => {
+        if (viejo[op.id] !== undefined) op.salario = viejo[op.id];
+      });
+      guardarSalarios();
+      renderNominaOperarios();
+    }
+    
+    // Importar anticipos si existen (se combinan con los ya existentes, sin duplicar por id)
+    if (importData.anticipos && Array.isArray(importData.anticipos)) {
+      const idsExistentes = new Set(anticipos.map(a => a.id));
+      importData.anticipos.forEach(a => {
+        if (!idsExistentes.has(a.id)) anticipos.push(a);
+      });
+      guardarAnticipos();
+      renderAnticipos();
     }
     
     // Importar metas si existen (compatible con tracker anterior que usaba "semanal")
@@ -2430,7 +2651,8 @@ function importarDatos() {
     actualizarTotales();
     actualizarMetas();
     
-    alert(`✅ Datos importados correctamente!\n\n📊 ${mesNombre} ${importData.year}`);
+    const numMesesImportados = importData.todosLosMeses ? Object.keys(importData.todosLosMeses).length : 1;
+    alert(`✅ Datos importados correctamente!\n\n📅 ${numMesesImportados} mes(es) restaurado(s)\n📊 Viendo: ${MESES[mesActual]} ${yearActual}`);
     
   } catch (err) {
     alert('❌ Error al importar datos.\n\nVerifica que el código esté completo y sea correcto.');
@@ -2725,6 +2947,143 @@ function calcPreset(value) {
     calcValue = String(value);
     document.getElementById('calcResult').textContent = value.toFixed(2);
   }
+}
+
+// ANTICIPOS DE CLIENTES
+function cargarAnticipos() {
+  const guardados = localStorage.getItem('andrade_anticipos');
+  if (guardados) {
+    anticipos = JSON.parse(guardados);
+  }
+}
+
+function guardarAnticipos() {
+  localStorage.setItem('andrade_anticipos', JSON.stringify(anticipos));
+}
+
+function calcularPendienteForm() {
+  const total = parseFloat(document.getElementById('anticipoTotal').value) || 0;
+  const recibido = parseFloat(document.getElementById('anticipoRecibido').value) || 0;
+  const pendiente = Math.max(0, total - recibido);
+  document.getElementById('anticipoPendientePreview').textContent = `$${pendiente.toFixed(2)}`;
+}
+
+function agregarAnticipo() {
+  const cliente = document.getElementById('anticipoCliente').value.trim();
+  const telefono = document.getElementById('anticipoTelefono').value.trim();
+  const servicio = document.getElementById('anticipoServicio').value.trim();
+  const montoTotal = parseFloat(document.getElementById('anticipoTotal').value);
+  const montoAnticipo = parseFloat(document.getElementById('anticipoRecibido').value);
+  const fechaServicio = document.getElementById('anticipoFecha').value;
+  
+  if (!cliente) {
+    alert('⚠️ Ingresa el nombre del cliente');
+    return;
+  }
+  if (isNaN(montoTotal) || montoTotal <= 0) {
+    alert('⚠️ Ingresa el monto total del servicio');
+    return;
+  }
+  if (isNaN(montoAnticipo) || montoAnticipo <= 0) {
+    alert('⚠️ Ingresa el monto del anticipo recibido');
+    return;
+  }
+  
+  const montoPendiente = Math.max(0, montoTotal - montoAnticipo);
+  
+  anticipos.push({
+    id: Date.now(),
+    cliente,
+    telefono,
+    servicio,
+    montoTotal,
+    montoAnticipo,
+    montoPendiente,
+    fechaAnticipo: new Date().toISOString().split('T')[0],
+    fechaServicio: fechaServicio || '',
+    estado: montoPendiente > 0 ? 'pendiente' : 'completado'
+  });
+  
+  guardarAnticipos();
+  
+  // Limpiar formulario
+  document.getElementById('anticipoCliente').value = '';
+  document.getElementById('anticipoTelefono').value = '';
+  document.getElementById('anticipoServicio').value = '';
+  document.getElementById('anticipoTotal').value = '';
+  document.getElementById('anticipoRecibido').value = '';
+  document.getElementById('anticipoFecha').value = '';
+  document.getElementById('anticipoPendientePreview').textContent = '$0.00';
+  
+  renderAnticipos();
+}
+
+function marcarCobrado(id) {
+  const a = anticipos.find(a => a.id === id);
+  if (!a) return;
+  
+  if (!confirm(`¿Marcar como cobrado el pendiente de ${a.cliente} ($${a.montoPendiente.toFixed(2)})?`)) return;
+  
+  a.estado = 'completado';
+  a.montoPendiente = 0;
+  guardarAnticipos();
+  renderAnticipos();
+}
+
+function eliminarAnticipo(id) {
+  const a = anticipos.find(a => a.id === id);
+  if (!a) return;
+  
+  if (!confirm(`¿Eliminar el registro de ${a.cliente}?`)) return;
+  
+  anticipos = anticipos.filter(a => a.id !== id);
+  guardarAnticipos();
+  renderAnticipos();
+}
+
+function renderAnticipos() {
+  const lista = document.getElementById('listaAnticipos');
+  if (!lista) return;
+  
+  const pendientes = anticipos.filter(a => a.estado === 'pendiente');
+  const completados = anticipos.filter(a => a.estado === 'completado');
+  
+  const totalPendiente = pendientes.reduce((s, a) => s + (a.montoPendiente || 0), 0);
+  const totalCompletado = completados.reduce((s, a) => s + (a.montoTotal || 0), 0);
+  
+  document.getElementById('anticiposPendienteTotal').textContent = `$${totalPendiente.toFixed(2)}`;
+  document.getElementById('anticiposPendienteCount').textContent = `${pendientes.length} pendiente${pendientes.length !== 1 ? 's' : ''}`;
+  document.getElementById('anticiposCompletadosTotal').textContent = `$${totalCompletado.toFixed(2)}`;
+  document.getElementById('anticiposCompletadosCount').textContent = `${completados.length} completado${completados.length !== 1 ? 's' : ''}`;
+  
+  if (anticipos.length === 0) {
+    lista.innerHTML = `<div style="text-align:center; padding:30px; color:#999;">No hay anticipos registrados todavía</div>`;
+    return;
+  }
+  
+  const ordenados = [...anticipos].sort((a, b) => {
+    if (a.estado !== b.estado) return a.estado === 'pendiente' ? -1 : 1;
+    return new Date(b.fechaAnticipo) - new Date(a.fechaAnticipo);
+  });
+  
+  lista.innerHTML = ordenados.map(a => `
+    <div class="payroll-card" style="background: ${a.estado === 'pendiente' ? 'linear-gradient(135deg, #ff9800 0%, #ffa726 100%)' : 'linear-gradient(135deg, #4CAF50 0%, #66bb6a 100%)'}; margin-bottom: 12px;">
+      <h3 style="color: white; display:flex; justify-content:space-between; align-items:center;">
+        <span>👤 ${a.cliente}</span>
+        <span style="font-size:11px; font-weight:400; opacity:0.9;">${a.estado === 'pendiente' ? '⏳ Pendiente' : '✅ Cobrado'}</span>
+      </h3>
+      ${a.telefono ? `<div class="payroll-row" style="border-color: rgba(255,255,255,0.3);"><span>📞 Teléfono</span><span><a href="tel:${a.telefono}" style="color:white; text-decoration:underline;">${a.telefono}</a></span></div>` : ''}
+      ${a.servicio ? `<div class="payroll-row" style="border-color: rgba(255,255,255,0.3);"><span>🔧 Servicio</span><span>${a.servicio}</span></div>` : ''}
+      <div class="payroll-row" style="border-color: rgba(255,255,255,0.3);"><span>💵 Total</span><span>$${a.montoTotal.toFixed(2)}</span></div>
+      <div class="payroll-row" style="border-color: rgba(255,255,255,0.3);"><span>✅ Anticipo recibido</span><span>$${a.montoAnticipo.toFixed(2)}</span></div>
+      <div class="payroll-row total" style="border-color: rgba(255,255,255,0.3);"><span>⏳ Pendiente</span><span>$${a.montoPendiente.toFixed(2)}</span></div>
+      <div class="payroll-row" style="border-color: rgba(255,255,255,0.3); font-size:11px; opacity:0.8;"><span>${a.fechaServicio ? '📅 Servicio: ' + a.fechaServicio : '📅 Registrado: ' + a.fechaAnticipo}</span><span></span></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        ${a.estado === 'pendiente' ? `<button class="btn" style="background:white; color:#333; margin:0; flex:1; padding:10px; font-size:13px;" onclick="marcarCobrado(${a.id})">✓ Marcar Cobrado</button>` : ''}
+        <button class="btn" style="background:rgba(0,0,0,0.2); color:white; margin:0; flex:${a.estado === 'pendiente' ? '0 0 44px' : '1'}; padding:10px; font-size:13px;" onclick="eliminarAnticipo(${a.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 window.onload = function() {
