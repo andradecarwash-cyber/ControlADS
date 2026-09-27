@@ -72,7 +72,7 @@ body {
   right: 0;
   background: white;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
   z-index: 1000;
   padding: 8px 0 8px 0;
@@ -99,7 +99,7 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 34px;
+  width: 40px;
   height: 3px;
   background: transparent;
   border-radius: 0 0 3px 3px;
@@ -115,7 +115,7 @@ body {
 }
 
 .nav-icon {
-  font-size: 20px;
+  font-size: 22px;
   filter: grayscale(100%);
   opacity: 0.6;
   transition: all 0.2s;
@@ -128,13 +128,8 @@ body {
 }
 
 .nav-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  padding: 0 2px;
 }
 
 /* Dashboard Stats */
@@ -1119,6 +1114,93 @@ body {
     <div class="section-header">📈 Resumen por Quincena</div>
     
     <div id="resumenQuincenas"></div>
+    
+    <div class="chart-container" style="padding-bottom: 0;">
+      <div class="chart-card">
+        <h3>📊 Ingresos por Quincena</h3>
+        <div class="bar-chart" id="chartQuincenas"></div>
+      </div>
+      
+      <div class="chart-card">
+        <h3>📈 Tendencia del Mes</h3>
+        <svg class="line-chart" id="chartTendencia" viewBox="0 0 300 180">
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#C9A84C;stop-opacity:0.4" />
+              <stop offset="100%" style="stop-color:#C9A84C;stop-opacity:0" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+    
+    <div class="goals-container">
+      <div class="goal-card">
+        <div class="goal-header">
+          <h3 class="goal-title">💰 Meta Mensual</h3>
+          <button class="goal-edit" onclick="editarMeta('mensual')">✏️</button>
+        </div>
+        <div class="goal-input-group">
+          <input type="number" id="metaMensual" class="goal-input" value="1680" 
+                 oninput="actualizarMetas()" readonly>
+          <div style="display: flex; align-items: center; justify-content: center; 
+                      font-size: 32px; font-weight: 700; color: #C9A84C;" id="metaMensualActual">$0</div>
+        </div>
+        <div class="goal-progress">
+          <div class="goal-progress-bar">
+            <div class="goal-progress-fill" id="progressMensual" style="width: 0%"></div>
+          </div>
+          <div class="goal-stats">
+            <span>Progreso: <span class="goal-stat-value" id="pctMensual">0%</span></span>
+            <span>Faltan: <span class="goal-stat-value" id="faltaMensual">$0</span></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="goal-card">
+        <div class="goal-header">
+          <h3 class="goal-title">📅 Meta Quincenal</h3>
+          <button class="goal-edit" onclick="editarMeta('quincenal')">✏️</button>
+        </div>
+        <div class="goal-input-group">
+          <input type="number" id="metaQuincenal" class="goal-input" value="840" 
+                 oninput="actualizarMetas()" readonly>
+          <div style="display: flex; align-items: center; justify-content: center; 
+                      font-size: 32px; font-weight: 700; color: #C9A84C;" id="metaQuincenalActual">$0</div>
+        </div>
+        <div class="goal-progress">
+          <div class="goal-progress-bar">
+            <div class="goal-progress-fill" id="progressQuincenal" style="width: 0%"></div>
+          </div>
+          <div class="goal-stats">
+            <span>Progreso: <span class="goal-stat-value" id="pctQuincenal">0%</span></span>
+            <span>Faltan: <span class="goal-stat-value" id="faltaQuincenal">$0</span></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="goal-card">
+        <div class="goal-header">
+          <h3 class="goal-title">☀️ Meta Diaria</h3>
+          <button class="goal-edit" onclick="editarMeta('diaria')">✏️</button>
+        </div>
+        <div class="goal-input-group">
+          <input type="number" id="metaDiaria" class="goal-input" value="56" 
+                 oninput="actualizarMetas()" readonly>
+          <div style="display: flex; align-items: center; justify-content: center; 
+                      font-size: 32px; font-weight: 700; color: #C9A84C;" id="metaDiariaActual">$0</div>
+        </div>
+        <div class="goal-progress">
+          <div class="goal-progress-bar">
+            <div class="goal-progress-fill" id="progressDiaria" style="width: 0%"></div>
+          </div>
+          <div class="goal-stats">
+            <span>Hoy: <span class="goal-stat-value" id="hoyIngreso">$0</span></span>
+            <span>Promedio: <span class="goal-stat-value" id="promedioDiario">$0</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1129,8 +1211,7 @@ body {
   </div>
 </div>
 
-<!-- TAB 3: NÓMINA -->
-<!-- TAB 4: AJUSTES -->
+<!-- TAB: AJUSTES -->
 <div id="tab-ajustes" class="tab-content">
   <div class="settings-container">
     <div class="section-header">💰 NÓMINA</div>
@@ -1148,145 +1229,8 @@ body {
       💡 Toca "Pago por día" para editar salarios, o "🗑️" para quitar a alguien del equipo
     </div>
     
-    <div class="settings-group" style="margin-top: 30px;">
-      <h3>📊 Información del Mes</h3>
-      <div class="settings-item">
-        <span class="settings-label">Días trabajados</span>
-        <span class="settings-value" id="diasTrabajadosSetting">0</span>
-      </div>
-      <div class="settings-item">
-        <span class="settings-label">Promedio diario</span>
-        <span class="settings-value" id="promedioDiarioSetting">$0</span>
-      </div>
-      <div class="settings-item">
-        <span class="settings-label">Mejor día</span>
-        <span class="settings-value" id="mejorDiaSetting">-</span>
-      </div>
-    </div>
+    <div class="section-header" style="margin-top: 30px;">💵 ANTICIPOS</div>
     
-    <div class="settings-group">
-      <h3>💾 Datos</h3>
-      <button class="btn btn-primary" onclick="guardarDatos()">💾 Guardar Datos</button>
-      <button class="btn btn-secondary" onclick="cargarDatos()">📂 Cargar Datos</button>
-      <button class="btn btn-danger" onclick="resetearMes()">🔄 Resetear Mes</button>
-    </div>
-    
-    <div class="settings-group">
-      <h3>📤 Transferir Datos</h3>
-      <button class="btn btn-primary" onclick="exportarDatos()">📤 Exportar Datos</button>
-      <button class="btn btn-secondary" onclick="importarDatos()">📥 Importar Datos</button>
-      <div class="hint" style="margin-top: 10px;">
-        💡 Usa Exportar/Importar para transferir datos entre dispositivos o versiones
-      </div>
-    </div>
-    
-    <div class="settings-group">
-      <h3>ℹ️ Información</h3>
-      <div class="settings-item">
-        <span class="settings-label">Versión</span>
-        <span class="settings-value">2.0</span>
-      </div>
-      <div class="settings-item">
-        <span class="settings-label">Andrade Detailing Studio</span>
-        <span class="settings-value">2026</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- TAB: GRÁFICAS + METAS -->
-<div id="tab-metas" class="tab-content">
-  <div class="chart-container" style="padding-bottom: 0;">
-    <div class="chart-card">
-      <h3>📊 Ingresos por Quincena</h3>
-      <div class="bar-chart" id="chartQuincenas"></div>
-    </div>
-    
-    <div class="chart-card">
-      <h3>📈 Tendencia del Mes</h3>
-      <svg class="line-chart" id="chartTendencia" viewBox="0 0 300 180">
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#C9A84C;stop-opacity:0.4" />
-            <stop offset="100%" style="stop-color:#C9A84C;stop-opacity:0" />
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
-  </div>
-  
-  <div class="goals-container">
-    <div class="goal-card">
-      <div class="goal-header">
-        <h3 class="goal-title">💰 Meta Mensual</h3>
-        <button class="goal-edit" onclick="editarMeta('mensual')">✏️</button>
-      </div>
-      <div class="goal-input-group">
-        <input type="number" id="metaMensual" class="goal-input" value="1680" 
-               oninput="actualizarMetas()" readonly>
-        <div style="display: flex; align-items: center; justify-content: center; 
-                    font-size: 32px; font-weight: 700; color: #C9A84C;" id="metaMensualActual">$0</div>
-      </div>
-      <div class="goal-progress">
-        <div class="goal-progress-bar">
-          <div class="goal-progress-fill" id="progressMensual" style="width: 0%"></div>
-        </div>
-        <div class="goal-stats">
-          <span>Progreso: <span class="goal-stat-value" id="pctMensual">0%</span></span>
-          <span>Faltan: <span class="goal-stat-value" id="faltaMensual">$0</span></span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="goal-card">
-      <div class="goal-header">
-        <h3 class="goal-title">📅 Meta Quincenal</h3>
-        <button class="goal-edit" onclick="editarMeta('quincenal')">✏️</button>
-      </div>
-      <div class="goal-input-group">
-        <input type="number" id="metaQuincenal" class="goal-input" value="840" 
-               oninput="actualizarMetas()" readonly>
-        <div style="display: flex; align-items: center; justify-content: center; 
-                    font-size: 32px; font-weight: 700; color: #C9A84C;" id="metaQuincenalActual">$0</div>
-      </div>
-      <div class="goal-progress">
-        <div class="goal-progress-bar">
-          <div class="goal-progress-fill" id="progressQuincenal" style="width: 0%"></div>
-        </div>
-        <div class="goal-stats">
-          <span>Progreso: <span class="goal-stat-value" id="pctQuincenal">0%</span></span>
-          <span>Faltan: <span class="goal-stat-value" id="faltaQuincenal">$0</span></span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="goal-card">
-      <div class="goal-header">
-        <h3 class="goal-title">☀️ Meta Diaria</h3>
-        <button class="goal-edit" onclick="editarMeta('diaria')">✏️</button>
-      </div>
-      <div class="goal-input-group">
-        <input type="number" id="metaDiaria" class="goal-input" value="56" 
-               oninput="actualizarMetas()" readonly>
-        <div style="display: flex; align-items: center; justify-content: center; 
-                    font-size: 32px; font-weight: 700; color: #C9A84C;" id="metaDiariaActual">$0</div>
-      </div>
-      <div class="goal-progress">
-        <div class="goal-progress-bar">
-          <div class="goal-progress-fill" id="progressDiaria" style="width: 0%"></div>
-        </div>
-        <div class="goal-stats">
-          <span>Hoy: <span class="goal-stat-value" id="hoyIngreso">$0</span></span>
-          <span>Promedio: <span class="goal-stat-value" id="promedioDiario">$0</span></span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- TAB: ANTICIPOS -->
-<div id="tab-anticipos" class="tab-content">
-  <div class="dashboard">
     <div class="stats-grid">
       <div class="stat-card highlight">
         <div class="stat-label">⏳ Por Cobrar</div>
@@ -1336,8 +1280,51 @@ body {
       </div>
     </div>
     
-    <div class="section-header">📋 Anticipos Registrados</div>
-    <div id="listaAnticipos" style="padding: 0 20px 20px;"></div>
+    <div id="listaAnticipos" style="padding: 0 0 10px;"></div>
+    
+    <div class="settings-group" style="margin-top: 30px;">
+      <h3>📊 Información del Mes</h3>
+      <div class="settings-item">
+        <span class="settings-label">Días trabajados</span>
+        <span class="settings-value" id="diasTrabajadosSetting">0</span>
+      </div>
+      <div class="settings-item">
+        <span class="settings-label">Promedio diario</span>
+        <span class="settings-value" id="promedioDiarioSetting">$0</span>
+      </div>
+      <div class="settings-item">
+        <span class="settings-label">Mejor día</span>
+        <span class="settings-value" id="mejorDiaSetting">-</span>
+      </div>
+    </div>
+    
+    <div class="settings-group">
+      <h3>💾 Datos</h3>
+      <button class="btn btn-primary" onclick="guardarDatos()">💾 Guardar Datos</button>
+      <button class="btn btn-secondary" onclick="cargarDatos()">📂 Cargar Datos</button>
+      <button class="btn btn-danger" onclick="resetearMes()">🔄 Resetear Mes</button>
+    </div>
+    
+    <div class="settings-group">
+      <h3>📤 Transferir Datos</h3>
+      <button class="btn btn-primary" onclick="exportarDatos()">📤 Exportar Datos</button>
+      <button class="btn btn-secondary" onclick="importarDatos()">📥 Importar Datos</button>
+      <div class="hint" style="margin-top: 10px;">
+        💡 Usa Exportar/Importar para transferir datos entre dispositivos o versiones
+      </div>
+    </div>
+    
+    <div class="settings-group">
+      <h3>ℹ️ Información</h3>
+      <div class="settings-item">
+        <span class="settings-label">Versión</span>
+        <span class="settings-value">2.0</span>
+      </div>
+      <div class="settings-item">
+        <span class="settings-label">Andrade Detailing Studio</span>
+        <span class="settings-value">2026</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1354,14 +1341,6 @@ body {
   <button class="nav-item" onclick="cambiarTab('dias')">
     <div class="nav-icon">📋</div>
     <div class="nav-label">Días</div>
-  </button>
-  <button class="nav-item" onclick="cambiarTab('metas')">
-    <div class="nav-icon">🎯</div>
-    <div class="nav-label">Metas</div>
-  </button>
-  <button class="nav-item" onclick="cambiarTab('anticipos')">
-    <div class="nav-icon">💵</div>
-    <div class="nav-label">Anticipos</div>
   </button>
   <button class="nav-item" onclick="cambiarTab('ajustes')">
     <div class="nav-icon">⚙️</div>
@@ -1623,7 +1602,7 @@ function cambiarTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   
   // Activate the clicked nav item
-  const tabs = ['ventas', 'resumen', 'dias', 'metas', 'anticipos', 'ajustes'];
+  const tabs = ['ventas', 'resumen', 'dias', 'ajustes'];
   const index = tabs.indexOf(tab);
   if (index !== -1) {
     document.querySelectorAll('.nav-item')[index].classList.add('active');
@@ -1637,13 +1616,12 @@ function cambiarTab(tab) {
     generarPanelQuincenaActual();
     generarPanelProyeccion();
     generarPanelAlertas();
+    generarGraficas();
+    actualizarMetas();
   } else if (tab === 'dias') {
     // Scroll al día de hoy cuando se abre la pestaña Días
     scrollAlDiaDeHoy();
-  } else if (tab === 'metas') {
-    generarGraficas();
-    actualizarMetas();
-  } else if (tab === 'anticipos') {
+  } else if (tab === 'ajustes') {
     renderAnticipos();
   }
 }
@@ -3219,6 +3197,7 @@ window.onload = function() {
   generarGraficas();
   actualizarMetas();
   renderTabVentas();
+  renderAnticipos();
   
   // Auto-expandir quincena actual
   setTimeout(() => {
