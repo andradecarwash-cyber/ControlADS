@@ -72,7 +72,7 @@ body {
   right: 0;
   background: white;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
   z-index: 1000;
   padding: 8px 0 8px 0;
@@ -99,7 +99,7 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 28px;
+  width: 34px;
   height: 3px;
   background: transparent;
   border-radius: 0 0 3px 3px;
@@ -115,7 +115,7 @@ body {
 }
 
 .nav-icon {
-  font-size: 18px;
+  font-size: 20px;
   filter: grayscale(100%);
   opacity: 0.6;
   transition: all 0.2s;
@@ -128,13 +128,13 @@ body {
 }
 
 .nav-label {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  padding: 0 1px;
+  padding: 0 2px;
 }
 
 /* Dashboard Stats */
@@ -891,125 +891,6 @@ body {
   color: #C9A84C;
 }
 
-/* Calculator */
-.calc-container {
-  padding: 20px;
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.calc-display {
-  background: linear-gradient(135deg, #0a0f18 0%, #1a1f28 100%);
-  color: white;
-  padding: 30px 20px;
-  border-radius: 16px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.calc-operation {
-  font-size: 14px;
-  color: #C9A84C;
-  margin-bottom: 8px;
-  min-height: 20px;
-}
-
-.calc-result {
-  font-size: 42px;
-  font-weight: 700;
-  text-align: right;
-}
-
-.calc-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.calc-btn {
-  aspect-ratio: 1;
-  border: none;
-  border-radius: 16px;
-  font-size: 24px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.calc-btn:active {
-  transform: scale(0.95);
-}
-
-.calc-btn-number {
-  background: white;
-  color: #333;
-}
-
-.calc-btn-operator {
-  background: #C9A84C;
-  color: white;
-}
-
-.calc-btn-clear {
-  background: #D32F2F;
-  color: white;
-}
-
-.calc-btn-equals {
-  background: #4CAF50;
-  color: white;
-  grid-column: span 2;
-}
-
-.calc-presets {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  margin-top: 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-
-.calc-presets h3 {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #333;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.preset-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.preset-btn {
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  background: white;
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.preset-btn:active {
-  background: #C9A84C;
-  border-color: #C9A84C;
-  color: white;
-}
-
-.preset-label {
-  display: block;
-  font-size: 10px;
-  color: #999;
-  margin-top: 3px;
-}
-
 /* Alert Panels */
 .alert-panel {
   background: linear-gradient(135deg, #C9A84C 0%, #d4b865 100%);
@@ -1310,70 +1191,12 @@ body {
         <span class="settings-value">2026</span>
       </div>
     </div>
-    
-    <div class="section-header" style="margin-top: 30px;">🧮 CALCULADORA RÁPIDA</div>
-    
-    <div class="calc-container">
-      <div class="calc-display">
-        <div class="calc-operation" id="calcOperation"></div>
-        <div class="calc-result" id="calcResult">0</div>
-      </div>
-      
-      <div class="calc-buttons">
-        <button class="calc-btn calc-btn-clear" onclick="calcClear()">C</button>
-        <button class="calc-btn calc-btn-operator" onclick="calcOp('/')">/</button>
-        <button class="calc-btn calc-btn-operator" onclick="calcOp('*')">×</button>
-        <button class="calc-btn calc-btn-operator" onclick="calcOp('-')">-</button>
-        
-        <button class="calc-btn calc-btn-number" onclick="calcNum('7')">7</button>
-        <button class="calc-btn calc-btn-number" onclick="calcNum('8')">8</button>
-        <button class="calc-btn calc-btn-number" onclick="calcNum('9')">9</button>
-        <button class="calc-btn calc-btn-operator" onclick="calcOp('+')">+</button>
-        
-        <button class="calc-btn calc-btn-number" onclick="calcNum('4')">4</button>
-        <button class="calc-btn calc-btn-number" onclick="calcNum('5')">5</button>
-        <button class="calc-btn calc-btn-number" onclick="calcNum('6')">6</button>
-        <button class="calc-btn calc-btn-operator" onclick="calcPercent()">%</button>
-        
-        <button class="calc-btn calc-btn-number" onclick="calcNum('1')">1</button>
-        <button class="calc-btn calc-btn-number" onclick="calcNum('2')">2</button>
-        <button class="calc-btn calc-btn-number" onclick="calcNum('3')">3</button>
-        <button class="calc-btn calc-btn-number" onclick="calcNum('.')">.</button>
-        
-        <button class="calc-btn calc-btn-number" onclick="calcNum('0')" style="grid-column: span 2;">0</button>
-        <button class="calc-btn calc-btn-equals" onclick="calcEquals()">=</button>
-      </div>
-      
-      <div class="calc-presets">
-        <h3>⚡ Atajos Rápidos</h3>
-        <div class="preset-grid">
-          <button class="preset-btn" onclick="calcPreset(7.99)">
-            $7.99 <span class="preset-label">Lavado Deluxe</span>
-          </button>
-          <button class="preset-btn" onclick="calcPreset(12.99)">
-            $12.99 <span class="preset-label">Lavado Premium</span>
-          </button>
-          <button class="preset-btn" onclick="calcPreset(20)">
-            $20 <span class="preset-label">Detallado Bronce</span>
-          </button>
-          <button class="preset-btn" onclick="calcPreset(35)">
-            $35 <span class="preset-label">Detallado Plata</span>
-          </button>
-          <button class="preset-btn" onclick="calcPreset(55)">
-            $55 <span class="preset-label">Detallado Oro</span>
-          </button>
-          <button class="preset-btn" onclick="calcPreset(85)">
-            $85 <span class="preset-label">Tapicería</span>
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
-<!-- TAB 5: GRÁFICAS -->
-<div id="tab-graficas" class="tab-content">
-  <div class="chart-container">
+<!-- TAB: GRÁFICAS + METAS -->
+<div id="tab-metas" class="tab-content">
+  <div class="chart-container" style="padding-bottom: 0;">
     <div class="chart-card">
       <h3>📊 Ingresos por Quincena</h3>
       <div class="bar-chart" id="chartQuincenas"></div>
@@ -1391,10 +1214,7 @@ body {
       </svg>
     </div>
   </div>
-</div>
-
-<!-- TAB 6: METAS -->
-<div id="tab-metas" class="tab-content">
+  
   <div class="goals-container">
     <div class="goal-card">
       <div class="goal-header">
@@ -1534,10 +1354,6 @@ body {
   <button class="nav-item" onclick="cambiarTab('dias')">
     <div class="nav-icon">📋</div>
     <div class="nav-label">Días</div>
-  </button>
-  <button class="nav-item" onclick="cambiarTab('graficas')">
-    <div class="nav-icon">📊</div>
-    <div class="nav-label">Gráficas</div>
   </button>
   <button class="nav-item" onclick="cambiarTab('metas')">
     <div class="nav-icon">🎯</div>
@@ -1807,7 +1623,7 @@ function cambiarTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   
   // Activate the clicked nav item
-  const tabs = ['ventas', 'resumen', 'dias', 'graficas', 'metas', 'anticipos', 'ajustes'];
+  const tabs = ['ventas', 'resumen', 'dias', 'metas', 'anticipos', 'ajustes'];
   const index = tabs.indexOf(tab);
   if (index !== -1) {
     document.querySelectorAll('.nav-item')[index].classList.add('active');
@@ -1824,9 +1640,8 @@ function cambiarTab(tab) {
   } else if (tab === 'dias') {
     // Scroll al día de hoy cuando se abre la pestaña Días
     scrollAlDiaDeHoy();
-  } else if (tab === 'graficas') {
-    generarGraficas();
   } else if (tab === 'metas') {
+    generarGraficas();
     actualizarMetas();
   } else if (tab === 'anticipos') {
     renderAnticipos();
@@ -1921,7 +1736,7 @@ function generarDias() {
         <div>
           <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
             <span>💰 Ingreso</span>
-            ${(data.ventasDetalle && data.ventasDetalle.length) ? `<span style="font-size:11px; color:#C9A84C; font-weight:600;">🧾 ${data.ventasDetalle.length} venta(s)</span>` : ''}
+            <span id="notaVentasIngreso_${dia}" style="font-size:11px; color:#C9A84C; font-weight:600;">${(data.ventasDetalle && data.ventasDetalle.length) ? `🧾 ${data.ventasDetalle.length} venta(s)` : ''}</span>
           </div>
           <input type="number" class="field-input" id="ingreso_${dia}" 
                  value="${data.ingreso || ''}" placeholder="$0.00" step="0.01"
@@ -3009,93 +2824,6 @@ function actualizarMetas() {
   else progDiaria.className = 'goal-progress-fill danger';
 }
 
-// CALCULATOR FUNCTIONS
-let calcValue = '0';
-let calcPrevious = null;
-let calcOperation = null;
-let calcWaiting = false;
-
-function calcClear() {
-  calcValue = '0';
-  calcPrevious = null;
-  calcOperation = null;
-  calcWaiting = false;
-  document.getElementById('calcResult').textContent = '0';
-  document.getElementById('calcOperation').textContent = '';
-}
-
-function calcNum(num) {
-  if (calcWaiting) {
-    calcValue = num;
-    calcWaiting = false;
-  } else {
-    calcValue = calcValue === '0' ? num : calcValue + num;
-  }
-  document.getElementById('calcResult').textContent = calcValue;
-}
-
-function calcOp(op) {
-  const input = parseFloat(calcValue);
-  
-  if (calcPrevious === null) {
-    calcPrevious = input;
-  } else if (calcOperation) {
-    const result = calcDoOperation();
-    calcValue = String(result);
-    calcPrevious = result;
-    document.getElementById('calcResult').textContent = calcValue;
-  }
-  
-  calcWaiting = true;
-  calcOperation = op;
-  document.getElementById('calcOperation').textContent = `${calcPrevious} ${op}`;
-}
-
-function calcDoOperation() {
-  const prev = calcPrevious;
-  const current = parseFloat(calcValue);
-  
-  switch(calcOperation) {
-    case '+': return prev + current;
-    case '-': return prev - current;
-    case '*': return prev * current;
-    case '/': return prev / current;
-    default: return current;
-  }
-}
-
-function calcEquals() {
-  if (calcOperation && calcPrevious !== null) {
-    const result = calcDoOperation();
-    document.getElementById('calcResult').textContent = result.toFixed(2);
-    document.getElementById('calcOperation').textContent = '';
-    calcValue = String(result);
-    calcPrevious = null;
-    calcOperation = null;
-    calcWaiting = false;
-  }
-}
-
-function calcPercent() {
-  const value = parseFloat(calcValue);
-  calcValue = String(value / 100);
-  document.getElementById('calcResult').textContent = calcValue;
-}
-
-function calcPreset(value) {
-  if (calcOperation && calcPrevious !== null) {
-    calcValue = String(value);
-    const result = calcDoOperation();
-    document.getElementById('calcResult').textContent = result.toFixed(2);
-    calcValue = String(result);
-    calcPrevious = null;
-    calcOperation = null;
-  } else {
-    calcValue = String(value);
-    document.getElementById('calcResult').textContent = value.toFixed(2);
-  }
-}
-
 // ANTICIPOS DE CLIENTES
 function cargarAnticipos() {
   const guardados = localStorage.getItem('andrade_anticipos');
@@ -3361,7 +3089,35 @@ function recalcularVentasDesdeDetalle(dia) {
   const total = items.reduce((s, v) => s + (parseFloat(v.precio) || 0), 0);
   datos[dia].ingreso = total;
   datos[dia].servicios = items.length;
+  sincronizarCamposDia(dia);
   actualizarTotales();
+}
+
+// Refleja los cambios hechos desde la pestaña Ventas directo en la tarjeta de ese día
+// dentro de la pestaña Días, sin tener que reconstruir toda la lista de días
+function sincronizarCamposDia(dia) {
+  const d = datos[dia];
+  if (!d) return;
+  const tieneVentas = d.ventasDetalle && d.ventasDetalle.length > 0;
+  
+  const inputIngreso = document.getElementById(`ingreso_${dia}`);
+  if (inputIngreso) {
+    inputIngreso.value = d.ingreso || '';
+    if (tieneVentas) inputIngreso.setAttribute('readonly', 'readonly');
+    else inputIngreso.removeAttribute('readonly');
+  }
+  
+  const inputServicios = document.getElementById(`servicios_${dia}`);
+  if (inputServicios) {
+    inputServicios.value = d.servicios || '';
+    if (tieneVentas) inputServicios.setAttribute('readonly', 'readonly');
+    else inputServicios.removeAttribute('readonly');
+  }
+  
+  const notaEl = document.getElementById(`notaVentasIngreso_${dia}`);
+  if (notaEl) notaEl.textContent = tieneVentas ? `🧾 ${d.ventasDetalle.length} venta(s)` : '';
+  
+  actualizarScore(dia);
 }
 
 function renderListaVentasHoy() {
