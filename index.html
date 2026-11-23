@@ -3257,6 +3257,61 @@ function renderAnticipos() {
   `).join('');
 }
 
+// Catálogo oficial de Andrade Detailing (tomado del catálogo de servicios de Juan, nov. 2026).
+// Los servicios con precio distinto según tamaño de vehículo se guardan como variantes separadas
+// (ej. "(Sedán)" / "(Pickup/Camioneta)") porque cada servicio del catálogo tiene un solo precio.
+const CATALOGO_OFICIAL_NOV2026 = [
+  { id: 'cer_premium_sedan', nombre: 'Tratamiento Cerámico Premium (Sedán)', precio: 440, categoria: 'Cerámicos' },
+  { id: 'cer_premium_pickup', nombre: 'Tratamiento Cerámico Premium (Pickup/Camioneta)', precio: 570, categoria: 'Cerámicos' },
+  { id: 'cer_deluxe_sedan', nombre: 'Tratamiento Cerámico Deluxe (Sedán)', precio: 350, categoria: 'Cerámicos' },
+  { id: 'cer_deluxe_pickup', nombre: 'Tratamiento Cerámico Deluxe (Pickup/Camioneta)', precio: 475, categoria: 'Cerámicos' },
+  { id: 'cer_basic_sedan', nombre: 'Tratamiento Cerámico Basic (Sedán)', precio: 220, categoria: 'Cerámicos' },
+  { id: 'cer_basic_pickup', nombre: 'Tratamiento Cerámico Basic (Pickup/Camioneta)', precio: 280, categoria: 'Cerámicos' },
+
+  { id: 'pul_deluxe_sedan', nombre: 'Pulido Deluxe (Sedán)', precio: 150, categoria: 'Pulidos' },
+  { id: 'pul_deluxe_pickup', nombre: 'Pulido Deluxe (Pickup/Camioneta)', precio: 190, categoria: 'Pulidos' },
+  { id: 'pul_basic_sedan', nombre: 'Pulido Basic (Sedán)', precio: 100, categoria: 'Pulidos' },
+  { id: 'pul_basic_pickup', nombre: 'Pulido Basic (Pickup/Camioneta)', precio: 120, categoria: 'Pulidos' },
+
+  { id: 'tap_sedan_pickup', nombre: 'Limpieza de Tapicería (Sedán/Pickup)', precio: 100, categoria: 'Tapicería' },
+  { id: 'tap_camioneta', nombre: 'Limpieza de Tapicería (Camioneta)', precio: 125, categoria: 'Tapicería' },
+
+  { id: 'lav_premium', nombre: 'Detallado Premium', precio: 55, categoria: 'Lavados' },
+  { id: 'lav_deluxe', nombre: 'Detallado Deluxe', precio: 35, categoria: 'Lavados' },
+  { id: 'lav_basic', nombre: 'Detallado Basic', precio: 20, categoria: 'Lavados' },
+
+  { id: 'moto_premium', nombre: 'Moto Premium', precio: 45, categoria: 'Motos' },
+  { id: 'moto_deluxe', nombre: 'Moto Deluxe', precio: 30, categoria: 'Motos' },
+  { id: 'moto_basic', nombre: 'Moto Basic', precio: 20, categoria: 'Motos' },
+
+  { id: 'mant_premium', nombre: 'Mantenimiento Premium', precio: 55, categoria: 'Mantenimiento Cerámico' },
+  { id: 'mant_deluxe', nombre: 'Mantenimiento Deluxe', precio: 35, categoria: 'Mantenimiento Cerámico' },
+  { id: 'mant_basic', nombre: 'Mantenimiento Basic', precio: 20, categoria: 'Mantenimiento Cerámico' },
+
+  { id: 'vid_sedan_pickup', nombre: 'Desmanchado de Vidrios (Sedán/Pickup)', precio: 75, categoria: 'Vidrios y Motor' },
+  { id: 'vid_camioneta', nombre: 'Desmanchado de Vidrios (Camioneta)', precio: 100, categoria: 'Vidrios y Motor' },
+  { id: 'vid_cer_sedan_pickup', nombre: 'Desmanchado + Cerámico de Vidrios (Sedán/Pickup)', precio: 125, categoria: 'Vidrios y Motor' },
+  { id: 'vid_cer_camioneta', nombre: 'Desmanchado + Cerámico de Vidrios (Camioneta)', precio: 175, categoria: 'Vidrios y Motor' },
+  { id: 'motor_detallado', nombre: 'Detallado de Motor', precio: 35, categoria: 'Vidrios y Motor' },
+  { id: 'chasis_lavado', nombre: 'Lavado de Chasis', precio: 20, categoria: 'Vidrios y Motor' },
+  { id: 'faros_restauracion', nombre: 'Restauración de Faros', precio: 50, categoria: 'Vidrios y Motor' }
+];
+
+// Se ejecuta una sola vez (por dispositivo/Firestore): agrega los servicios del catálogo oficial
+// que todavía no existan en el catálogo actual, sin tocar ni duplicar los que Juan ya tenga.
+function migrarCatalogoOficialNov2026() {
+  if (localStorage.getItem('andrade_catalogo_migrado_nov2026') === '1') return;
+  localStorage.setItem('andrade_catalogo_migrado_nov2026', '1');
+
+  const idsExistentes = new Set(catalogoServicios.map(s => s.id));
+  const faltantes = CATALOGO_OFICIAL_NOV2026.filter(s => !idsExistentes.has(s.id));
+  if (!faltantes.length) return;
+
+  catalogoServicios = catalogoServicios.concat(faltantes);
+  guardarCatalogoServicios();
+  renderCatalogoServicios();
+}
+
 // VENTAS DEL DÍA - registro rápido de servicios
 function cargarCatalogoVentas() {
   cargarPreferenciasCatalogoUI();
@@ -3270,6 +3325,7 @@ function cargarCatalogoVentas() {
   actualizarEstadoFirebase();
 
   if (!firebaseDisponible) {
+    migrarCatalogoOficialNov2026();
     renderCatalogoServicios();
     renderCatalogoVehiculos();
     return;
@@ -3287,6 +3343,7 @@ function cargarCatalogoVentas() {
       // Primera vez: sembrar Firestore con el catálogo local/por defecto
       refCatalogos().set({ servicios: catalogoServicios, vehiculos: catalogoVehiculos });
     }
+    migrarCatalogoOficialNov2026();
     renderCatalogoServicios();
     renderCatalogoVehiculos();
   }, err => {
