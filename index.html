@@ -1703,7 +1703,7 @@ let ventaDiaSeleccionado = null; // día del mes actualmente elegido en la pesta
 let ventaServicioPendiente = null; // servicio tocado, esperando que se elija el vehículo
 const ES_APP_JEFE = true; // true en tracker.html (jefe, puede editar catálogo); false en ventas.html (trabajador, solo lectura)
 let filtroServicios = ''; // texto de búsqueda activo en el catálogo de servicios
-let categoriasColapsadas = {}; // { 'Lavados': true, ... } preferencia guardada en este dispositivo
+let categoriaServicioAbierta = null; // nombre de la única categoría expandida en el catálogo de Ventas (acordeón: solo una a la vez)
 
 // Ayuda para cortes por quincena: Q1 = día 1-15, Q2 = día 16-fin de mes
 function getQuincena(dia) {
@@ -3361,14 +3361,12 @@ function actualizarEstadoFirebase() {
 }
 
 function cargarPreferenciasCatalogoUI() {
-  const guardadas = localStorage.getItem('andrade_categorias_colapsadas');
-  if (guardadas) {
-    try { categoriasColapsadas = JSON.parse(guardadas); } catch (e) { categoriasColapsadas = {}; }
-  }
+  const guardada = localStorage.getItem('andrade_categoria_abierta');
+  categoriaServicioAbierta = guardada || null;
 }
 
 function guardarPreferenciasCatalogoUI() {
-  localStorage.setItem('andrade_categorias_colapsadas', JSON.stringify(categoriasColapsadas));
+  localStorage.setItem('andrade_categoria_abierta', categoriaServicioAbierta || '');
 }
 
 function normalizarTexto(s) {
@@ -3381,7 +3379,8 @@ function filtrarServicios(valor) {
 }
 
 function toggleCategoriaServicio(nombreCategoria) {
-  categoriasColapsadas[nombreCategoria] = !categoriasColapsadas[nombreCategoria];
+  // Acordeón: tocar la categoría abierta la cierra; tocar otra la abre y cierra la anterior
+  categoriaServicioAbierta = (categoriaServicioAbierta === nombreCategoria) ? null : nombreCategoria;
   guardarPreferenciasCatalogoUI();
   renderCatalogoServicios();
 }
@@ -3619,7 +3618,7 @@ function renderCatalogoServicios() {
   });
 
   cont.innerHTML = Object.keys(grupos).map(cat => {
-    const colapsada = !!categoriasColapsadas[cat];
+    const colapsada = cat !== categoriaServicioAbierta;
     const items = grupos[cat];
     const catEsc = cat.replace(/'/g, "\\'");
     const col = colorParaCategoria(cat);
