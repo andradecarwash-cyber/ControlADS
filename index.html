@@ -1300,8 +1300,9 @@ body {
       <input type="text" id="buscarServicio" placeholder="Buscar servicio..." oninput="filtrarServicios(this.value)">
     </div>
     <div id="catalogoServicios"></div>
-    <div style="padding: 0 20px 15px;">
-      <button class="gastos-add-btn" style="width:100%;" onclick="agregarServicioCatalogo()">+ Agregar servicio al catálogo</button>
+    <div style="padding: 0 20px 15px; display:flex; gap:8px;">
+      <button class="gastos-add-btn" style="flex:1;" onclick="agregarServicioCatalogo()">+ Agregar servicio al catálogo</button>
+      <button class="gastos-add-btn" style="flex:1;" onclick="ventaPuntual()">+ Venta puntual</button>
     </div>
     
     <div id="panelVehiculo" style="display:none; margin: 0 20px 20px; padding: 16px; background: #fdeef0; border: 2px solid #B3253D; border-radius: 14px;">
@@ -3656,6 +3657,29 @@ function seleccionarServicio(id) {
   if (!s) return;
   ventaServicioPendiente = s;
   document.getElementById('servicioSeleccionadoLabel').textContent = `${s.nombre} ($${s.precio})`;
+  document.getElementById('panelVehiculo').style.display = 'block';
+}
+
+// Venta puntual: un trabajo único (ej. "Quitar rayones $30") que se vende una sola vez
+// y no se agrega al catálogo de servicios. Se registra igual que cualquier venta normal.
+async function ventaPuntual() {
+  const datosForm = await modalFormulario('Venta puntual', [
+    { id: 'nombre', label: 'Descripción del trabajo', placeholder: 'Ej. Quitar rayones, retoque puntual' },
+    { id: 'precio', label: 'Precio', tipo: 'number', placeholder: '30' }
+  ], 'Continuar');
+  if (!datosForm) return;
+  if (!datosForm.nombre || !datosForm.nombre.trim()) {
+    mostrarToast('Ingresa una descripción', 'error');
+    return;
+  }
+  const precio = parseFloat(datosForm.precio);
+  if (isNaN(precio) || precio <= 0) {
+    mostrarToast('Ingresa un precio válido', 'error');
+    return;
+  }
+
+  ventaServicioPendiente = { nombre: datosForm.nombre.trim(), precio };
+  document.getElementById('servicioSeleccionadoLabel').textContent = `${ventaServicioPendiente.nombre} ($${precio})`;
   document.getElementById('panelVehiculo').style.display = 'block';
 }
 
