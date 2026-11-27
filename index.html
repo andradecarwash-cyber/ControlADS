@@ -1667,7 +1667,7 @@ body {
       </div>
       <button class="btn btn-primary" onclick="descargarReporteCSV()">Descargar reporte (Excel)</button>
       <div class="hint" style="margin: 0 0 14px;">
-        Para administración: archivo con todas las ventas y gastos, listo para abrir en Excel. Envíalo como archivo adjunto.
+        Para administración: archivo con ventas, gastos, nómina y anticipos de todos los meses, listo para abrir en Excel. Envíalo como archivo adjunto.
       </div>
       <button class="btn btn-primary" onclick="exportarDatos()">Exportar Datos</button>
       <button class="btn btn-secondary" onclick="importarDatos()">Importar Datos</button>
@@ -2953,8 +2953,31 @@ function descargarReporteCSV() {
       } else if ((d.gastos || 0) > 0) {
         filas.push([...base, 'Gasto (total del día, sin detalle)', '', '', '', '', parseFloat(d.gastos) || 0]);
       }
+
+      // Nómina: una fila por empleado que trabajó ese día (mismas reglas que el resumen de quincenas:
+      // día abierto + empleado marcado; pago personalizado si existe, si no su pago diario normal)
+      if (d.abierto) {
+        operarios.forEach(op => {
+          if (!d[op.id]) return;
+          const custom = d.pagoCustom && d.pagoCustom[op.id] !== undefined && d.pagoCustom[op.id] !== null;
+          const pago = custom ? (parseFloat(d.pagoCustom[op.id]) || 0) : (parseFloat(op.salario) || 0);
+          filas.push([...base, 'Nómina', op.nombre, '', custom ? 'Pago personalizado' : 'Pago diario', '', pago]);
+        });
+      }
     });
   });
+
+  // Anticipos de clientes (cada uno cae en el mes de su fecha de servicio, o de registro si no tiene)
+  anticipos
+    .filter(a => a.fechaServicio || a.fechaAnticipo)
+    .sort((a, b) => (a.fechaServicio || a.fechaAnticipo).localeCompare(b.fechaServicio || b.fechaAnticipo))
+    .forEach(a => {
+      const fecha = a.fechaServicio || a.fechaAnticipo;
+      const f = new Date(fecha + 'T00:00:00');
+      const detalle = `Total $${(a.montoTotal || 0).toFixed(2)} - Pendiente $${(a.montoPendiente || 0).toFixed(2)} - ${a.estado === 'pendiente' ? 'Pendiente de cobro' : 'Cobrado'}`;
+      filas.push([fecha, MESES[f.getMonth()], getQuincena(f.getDate()), 'Anticipo de cliente',
+        [a.cliente, a.servicio].filter(Boolean).join(' - '), '', detalle, '', a.montoAnticipo || 0]);
+    });
 
   if (filas.length === 1) {
     mostrarToast('No hay datos para el reporte', 'error');
