@@ -598,23 +598,25 @@ body {
 .servicio-card {
   position: relative;
   background: white;
-  border: 2px solid #eee;
-  border-radius: 14px;
-  padding: 16px 12px;
+  border: 1px solid #eee;
+  border-left: 4px solid #ccc;
+  border-radius: 12px;
+  padding: 11px 12px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   cursor: pointer;
   transition: all 0.15s;
   font-family: inherit;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: left;
+  width: 100%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .servicio-card:active {
   background: #B3253D;
   border-color: #B3253D;
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .servicio-card:active .servicio-card-nombre,
@@ -623,19 +625,74 @@ body {
 }
 
 .servicio-card-nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-align: left;
+}
+
+.servicio-card-precio {
+  font-size: 15px;
+  font-weight: 700;
+  color: #B3253D;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.servicio-card-edit,
+.servicio-card-del {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  padding: 2px 1px;
+  white-space: nowrap;
+}
+
+.servicio-card-edit {
+  color: #999;
+}
+
+.servicio-card-del {
+  color: #c0392b;
+}
+
+/* Tarjetas de tipo de vehículo (panel "¿Qué vehículo?") — diseño propio, en cuadrícula */
+.vehiculo-card {
+  position: relative;
+  background: white;
+  border: 2px solid #eee;
+  border-radius: 14px;
+  padding: 14px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.vehiculo-card:active {
+  background: #B3253D;
+  border-color: #B3253D;
+  transform: scale(0.97);
+}
+
+.vehiculo-card:active .vehiculo-card-nombre {
+  color: white;
+}
+
+.vehiculo-card-nombre {
   font-size: 14px;
   font-weight: 700;
   color: #333;
   text-align: center;
 }
 
-.servicio-card-precio {
-  font-size: 18px;
-  font-weight: 700;
-  color: #B3253D;
-}
-
-.servicio-card-del {
+.vehiculo-card-del {
   position: absolute;
   top: 2px;
   right: 6px;
@@ -645,22 +702,6 @@ body {
   height: 20px;
   line-height: 20px;
   text-align: center;
-}
-
-.servicio-card-edit {
-  position: absolute;
-  top: 2px;
-  left: 6px;
-  font-size: 13px;
-  color: #bbb;
-  width: 20px;
-  height: 20px;
-  line-height: 20px;
-  text-align: center;
-}
-
-.vehiculo-card {
-  padding: 14px 10px;
 }
 
 /* Categorías colapsables del catálogo de servicios */
@@ -695,20 +736,10 @@ body {
   transform: rotate(-90deg);
 }
 
-.categoria-icon {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.categoria-icon svg {
-  display: block;
-}
-
 .categoria-servicio-items {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
@@ -1704,6 +1735,8 @@ let ventaServicioPendiente = null; // servicio tocado, esperando que se elija el
 const ES_APP_JEFE = true; // true en tracker.html (jefe, puede editar catálogo); false en ventas.html (trabajador, solo lectura)
 let filtroServicios = ''; // texto de búsqueda activo en el catálogo de servicios
 let categoriaServicioAbierta = null; // nombre de la única categoría expandida en el catálogo de Ventas (acordeón: solo una a la vez)
+let categoriaServicioAbiertaTimer = null; // temporizador que cierra la categoría sola después de 1 minuto
+const CIERRE_AUTOMATICO_CATEGORIA_MS = 60000;
 
 // Ayuda para cortes por quincena: Q1 = día 1-15, Q2 = día 16-fin de mes
 function getQuincena(dia) {
@@ -1930,6 +1963,7 @@ function cambiarTab(tab) {
   // Update content when switching tabs
   if (tab === 'ventas') {
     renderTabVentas();
+    window.scrollTo(0, 0);
   } else if (tab === 'resumen') {
     generarResumenQuincenas();
     generarPanelQuincenaActual();
@@ -1937,11 +1971,13 @@ function cambiarTab(tab) {
     generarPanelAlertas();
     generarGraficas();
     actualizarMetas();
+    window.scrollTo(0, 0);
   } else if (tab === 'dias') {
     // Scroll al día de hoy cuando se abre la pestaña Días
     scrollAlDiaDeHoy();
   } else if (tab === 'ajustes') {
     renderAnticipos();
+    window.scrollTo(0, 0);
   }
 }
 
@@ -3363,10 +3399,27 @@ function actualizarEstadoFirebase() {
 function cargarPreferenciasCatalogoUI() {
   const guardada = localStorage.getItem('andrade_categoria_abierta');
   categoriaServicioAbierta = guardada || null;
+  programarCierreAutomaticoCategoria();
 }
 
 function guardarPreferenciasCatalogoUI() {
   localStorage.setItem('andrade_categoria_abierta', categoriaServicioAbierta || '');
+}
+
+// Si hay una categoría abierta, la cierra sola a los 60 segundos (para que la lista
+// de servicios no se quede ocupando pantalla si Juan/René se distraen sin tocarla).
+function programarCierreAutomaticoCategoria() {
+  if (categoriaServicioAbiertaTimer) {
+    clearTimeout(categoriaServicioAbiertaTimer);
+    categoriaServicioAbiertaTimer = null;
+  }
+  if (!categoriaServicioAbierta) return;
+  categoriaServicioAbiertaTimer = setTimeout(() => {
+    categoriaServicioAbierta = null;
+    categoriaServicioAbiertaTimer = null;
+    guardarPreferenciasCatalogoUI();
+    renderCatalogoServicios();
+  }, CIERRE_AUTOMATICO_CATEGORIA_MS);
 }
 
 function normalizarTexto(s) {
@@ -3378,29 +3431,32 @@ function filtrarServicios(valor) {
   renderCatalogoServicios();
 }
 
-function toggleCategoriaServicio(nombreCategoria) {
-  // Acordeón: tocar la categoría abierta la cierra; tocar otra la abre y cierra la anterior
-  categoriaServicioAbierta = (categoriaServicioAbierta === nombreCategoria) ? null : nombreCategoria;
-  guardarPreferenciasCatalogoUI();
-  renderCatalogoServicios();
+// id estable por categoría (para poder ubicarla y hacerle scroll después de renderizar)
+function idHeaderCategoria(nombreCategoria) {
+  return 'catHeader_' + normalizarTexto(nombreCategoria).replace(/[^a-z0-9]+/g, '_');
 }
 
-// Paleta de colores + ícono por categoría de servicio (detectada por palabra clave en el nombre)
-const PALETA_CATEGORIAS = [
-  { bg: '#eef6f0', border: '#4caf7d', text: '#2d6b47', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c4 5 7 8.5 7 12a7 7 0 11-14 0c0-3.5 3-7 7-12z"/></svg>' },
-  { bg: '#fff4e8', border: '#e08a3c', text: '#8a4f1a', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg>' },
-  { bg: '#eef0fb', border: '#6c7fd8', text: '#3b4a9e', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12V7a2 2 0 012-2h8a2 2 0 012 2v5"/><path d="M4 12h16v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4z"/><line x1="6" y1="18" x2="6" y2="20"/><line x1="18" y1="18" x2="18" y2="20"/></svg>' },
-  { bg: '#fdeef3', border: '#d8618f', text: '#9e3b5e', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="12" height="5" rx="1"/><line x1="9" y1="11" x2="9" y2="16"/><rect x="7" y="16" width="4" height="5" rx="1"/></svg>' },
-  { bg: '#f7e9ec', border: '#B3253D', text: '#7a2535', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.6 2.6-2-2z"/></svg>' }
-];
+function toggleCategoriaServicio(nombreCategoria) {
+  // Acordeón: tocar la categoría abierta la cierra; tocar otra la abre y cierra la anterior
+  const seAbrio = categoriaServicioAbierta !== nombreCategoria;
+  categoriaServicioAbierta = seAbrio ? nombreCategoria : null;
+  guardarPreferenciasCatalogoUI();
+  programarCierreAutomaticoCategoria();
+  renderCatalogoServicios();
+
+  if (seAbrio) {
+    // Llevar la categoría recién abierta hasta arriba, para no tener que escrolear
+    // y así ver de una vez dónde empiezan sus servicios y precios
+    const header = document.getElementById(idHeaderCategoria(nombreCategoria));
+    if (header) header.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// Un solo color de marca para todas las categorías (antes había un color distinto por categoría; ya no)
+const COLOR_CATEGORIA_MARCA = { bg: '#f7e9ec', border: '#B3253D', text: '#7a2535' };
 
 function colorParaCategoria(nombreCategoria) {
-  const n = normalizarTexto(nombreCategoria);
-  if (n.includes('lavad') || n.includes('bronce') || n.includes('plata') || n.includes('express')) return PALETA_CATEGORIAS[0];
-  if (n.includes('detall') || n.includes('motor') || n.includes('encerad')) return PALETA_CATEGORIAS[1];
-  if (n.includes('tapic') || n.includes('asiento')) return PALETA_CATEGORIAS[2];
-  if (n.includes('pintur') || n.includes('pulid') || n.includes('sellad') || n.includes('cerami') || n.includes('rayon')) return PALETA_CATEGORIAS[3];
-  return PALETA_CATEGORIAS[4];
+  return COLOR_CATEGORIA_MARCA;
 }
 
 // --- Modal propio, reemplaza prompt()/confirm() nativos en el flujo de Ventas ---
@@ -3579,11 +3635,11 @@ function actualizarVistaVentasHoy(dia) {
 function servicioCardHTML(s) {
   const col = colorParaCategoria(s.categoria || 'Otros');
   return `
-    <button class="servicio-card" style="border-top: 4px solid ${col.border};" onclick="seleccionarServicio('${s.id}')">
-      ${ES_APP_JEFE ? `<span class="servicio-card-edit" onclick="event.stopPropagation(); editarServicioCatalogo('${s.id}')">✏️</span>` : ''}
-      ${ES_APP_JEFE ? `<span class="servicio-card-del" onclick="event.stopPropagation(); eliminarServicioCatalogo('${s.id}')">×</span>` : ''}
+    <button class="servicio-card" style="border-left-color: ${col.border};" onclick="seleccionarServicio('${s.id}')">
       <span class="servicio-card-nombre">${s.nombre}</span>
       <span class="servicio-card-precio">$${s.precio}</span>
+      ${ES_APP_JEFE ? `<span class="servicio-card-edit" onclick="event.stopPropagation(); editarServicioCatalogo('${s.id}')">Editar</span>` : ''}
+      ${ES_APP_JEFE ? `<span class="servicio-card-del" onclick="event.stopPropagation(); eliminarServicioCatalogo('${s.id}')">Quitar</span>` : ''}
     </button>
   `;
 }
@@ -3623,8 +3679,8 @@ function renderCatalogoServicios() {
     const catEsc = cat.replace(/'/g, "\\'");
     const col = colorParaCategoria(cat);
     return `
-      <div class="categoria-servicio-header" style="background:${col.bg}; color:${col.text};" onclick="toggleCategoriaServicio('${catEsc}')">
-        <span style="display:flex; align-items:center; gap:7px;"><span class="categoria-icon">${col.icon}</span>${cat}<span class="categoria-servicio-count">(${items.length})</span></span>
+      <div class="categoria-servicio-header" id="${idHeaderCategoria(cat)}" style="background:${col.bg}; color:${col.text};" onclick="toggleCategoriaServicio('${catEsc}')">
+        <span>${cat}<span class="categoria-servicio-count">(${items.length})</span></span>
         <span class="categoria-servicio-chevron ${colapsada ? 'colapsado' : ''}">▼</span>
       </div>
       <div class="categoria-servicio-items" style="${colapsada ? 'display:none;' : ''}">
@@ -3638,9 +3694,9 @@ function renderCatalogoVehiculos() {
   const cont = document.getElementById('catalogoVehiculos');
   if (!cont) return;
   cont.innerHTML = catalogoVehiculos.map(v => `
-    <button class="servicio-card vehiculo-card" onclick="confirmarVenta('${v.id}')">
-      ${ES_APP_JEFE ? `<span class="servicio-card-del" onclick="event.stopPropagation(); eliminarVehiculoCatalogo('${v.id}')">×</span>` : ''}
-      <span class="servicio-card-nombre">${v.nombre}</span>
+    <button class="vehiculo-card" onclick="confirmarVenta('${v.id}')">
+      ${ES_APP_JEFE ? `<span class="vehiculo-card-del" onclick="event.stopPropagation(); eliminarVehiculoCatalogo('${v.id}')">×</span>` : ''}
+      <span class="vehiculo-card-nombre">${v.nombre}</span>
     </button>
   `).join('');
   actualizarResumenTiposVehiculo();
