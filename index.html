@@ -1102,18 +1102,65 @@ body {
   margin-bottom: 15px;
 }
 
+.goal-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.goal-col-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.goal-input-wrap {
+  position: relative;
+}
+
+.goal-input-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  font-weight: 600;
+  color: #999;
+  pointer-events: none;
+}
+
 .goal-input {
-  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 12px 12px 22px;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   text-align: center;
 }
 
 .goal-input:focus {
   outline: none;
   border-color: #B3253D;
+}
+
+.goal-actual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 46px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f7e9ec;
+  font-size: 15px;
+  font-weight: 700;
+  color: #B3253D;
 }
 
 .goal-progress {
@@ -1420,10 +1467,18 @@ body {
           <button class="goal-edit" onclick="editarMeta('mensual')">Editar</button>
         </div>
         <div class="goal-input-group">
-          <input type="number" id="metaMensual" class="goal-input" value="1680" 
-                 oninput="actualizarMetas()" readonly>
-          <div style="display: flex; align-items: center; justify-content: center; 
-                      font-size: 32px; font-weight: 700; color: #B3253D;" id="metaMensualActual">$0</div>
+          <div class="goal-col">
+            <span class="goal-col-label">Meta</span>
+            <div class="goal-input-wrap">
+              <span class="goal-input-prefix">$</span>
+              <input type="number" id="metaMensual" class="goal-input" value="1680"
+                     oninput="actualizarMetas()" readonly>
+            </div>
+          </div>
+          <div class="goal-col">
+            <span class="goal-col-label">Llevas</span>
+            <div class="goal-actual" id="metaMensualActual">$0</div>
+          </div>
         </div>
         <div class="goal-progress">
           <div class="goal-progress-bar">
@@ -1442,10 +1497,18 @@ body {
           <button class="goal-edit" onclick="editarMeta('quincenal')">Editar</button>
         </div>
         <div class="goal-input-group">
-          <input type="number" id="metaQuincenal" class="goal-input" value="840" 
-                 oninput="actualizarMetas()" readonly>
-          <div style="display: flex; align-items: center; justify-content: center; 
-                      font-size: 32px; font-weight: 700; color: #B3253D;" id="metaQuincenalActual">$0</div>
+          <div class="goal-col">
+            <span class="goal-col-label">Meta</span>
+            <div class="goal-input-wrap">
+              <span class="goal-input-prefix">$</span>
+              <input type="number" id="metaQuincenal" class="goal-input" value="840"
+                     oninput="actualizarMetas()" readonly>
+            </div>
+          </div>
+          <div class="goal-col">
+            <span class="goal-col-label">Llevas</span>
+            <div class="goal-actual" id="metaQuincenalActual">$0</div>
+          </div>
         </div>
         <div class="goal-progress">
           <div class="goal-progress-bar">
@@ -1464,10 +1527,18 @@ body {
           <button class="goal-edit" onclick="editarMeta('diaria')">Editar</button>
         </div>
         <div class="goal-input-group">
-          <input type="number" id="metaDiaria" class="goal-input" value="56" 
-                 oninput="actualizarMetas()" readonly>
-          <div style="display: flex; align-items: center; justify-content: center; 
-                      font-size: 32px; font-weight: 700; color: #B3253D;" id="metaDiariaActual">$0</div>
+          <div class="goal-col">
+            <span class="goal-col-label">Meta</span>
+            <div class="goal-input-wrap">
+              <span class="goal-input-prefix">$</span>
+              <input type="number" id="metaDiaria" class="goal-input" value="56"
+                     oninput="actualizarMetas()" readonly>
+            </div>
+          </div>
+          <div class="goal-col">
+            <span class="goal-col-label">Llevas</span>
+            <div class="goal-actual" id="metaDiariaActual">$0</div>
+          </div>
         </div>
         <div class="goal-progress">
           <div class="goal-progress-bar">
@@ -1589,19 +1660,13 @@ body {
     </div>
     
     <div class="settings-group">
-      <h3>Datos</h3>
-      <button class="btn btn-primary" onclick="guardarDatos()">Guardar Datos</button>
-      <button class="btn btn-secondary" onclick="cargarDatos()">Cargar Datos</button>
-      <button class="btn btn-danger" onclick="resetearMes()">Resetear Mes</button>
-    </div>
-    
-    <div class="settings-group">
       <h3>Transferir Datos</h3>
       <button class="btn btn-primary" onclick="exportarDatos()">Exportar Datos</button>
       <button class="btn btn-secondary" onclick="importarDatos()">Importar Datos</button>
       <div class="hint" style="margin-top: 10px;">
         Usa Exportar/Importar para transferir datos entre dispositivos o versiones
       </div>
+      <button class="btn btn-danger" style="margin-top: 10px;" onclick="resetearMes()">Resetear Mes</button>
     </div>
     
     <div class="settings-group">
@@ -1807,7 +1872,8 @@ function cambiarMes() {
   
   generarDias();
   generarResumenQuincenas();
-  
+  renderAnticipos(); // los anticipos se filtran por mes, así que hay que refrescarlos al cambiar de mes
+
   // Si estamos en la pestaña Ventas, recalcular el día por defecto para el nuevo mes
   ventaDiaSeleccionado = null;
   if (tabActual === 'ventas') {
@@ -2734,23 +2800,6 @@ function autoGuardar() {
   }, 500); // Espera 500ms después del último cambio
 }
 
-function guardarDatos() {
-  localStorage.setItem(`andrade_${yearActual}_${mesActual}`, JSON.stringify(datos));
-  alert('Datos guardados');
-}
-
-function cargarDatos() {
-  const guardado = localStorage.getItem(`andrade_${yearActual}_${mesActual}`);
-  if (guardado) {
-    datos = JSON.parse(guardado);
-    generarDias();
-    generarResumenQuincenas();
-    alert('Datos cargados');
-  } else {
-    alert('No hay datos guardados');
-  }
-}
-
 function resetearMes() {
   if (confirm('¿Resetear todo el mes?')) {
     inicializarMes();
@@ -3249,27 +3298,37 @@ function eliminarAnticipo(id) {
   renderAnticipos();
 }
 
+// Un anticipo pertenece al mes de su fecha de servicio (si la tiene) o, si no, al mes en que se registró.
+function anticipoPerteneceAMes(a, anio, mes) {
+  const fechaRef = a.fechaServicio || a.fechaAnticipo;
+  if (!fechaRef) return false;
+  const d = new Date(fechaRef + 'T00:00:00');
+  return d.getFullYear() === anio && d.getMonth() === mes;
+}
+
 function renderAnticipos() {
   const lista = document.getElementById('listaAnticipos');
   if (!lista) return;
-  
-  const pendientes = anticipos.filter(a => a.estado === 'pendiente');
-  const completados = anticipos.filter(a => a.estado === 'completado');
-  
+
+  const anticiposDelMes = anticipos.filter(a => anticipoPerteneceAMes(a, yearActual, mesActual));
+
+  const pendientes = anticiposDelMes.filter(a => a.estado === 'pendiente');
+  const completados = anticiposDelMes.filter(a => a.estado === 'completado');
+
   const totalPendiente = pendientes.reduce((s, a) => s + (a.montoPendiente || 0), 0);
   const totalCompletado = completados.reduce((s, a) => s + (a.montoTotal || 0), 0);
-  
+
   document.getElementById('anticiposPendienteTotal').textContent = `$${totalPendiente.toFixed(2)}`;
   document.getElementById('anticiposPendienteCount').textContent = `${pendientes.length} pendiente${pendientes.length !== 1 ? 's' : ''}`;
   document.getElementById('anticiposCompletadosTotal').textContent = `$${totalCompletado.toFixed(2)}`;
   document.getElementById('anticiposCompletadosCount').textContent = `${completados.length} completado${completados.length !== 1 ? 's' : ''}`;
-  
-  if (anticipos.length === 0) {
-    lista.innerHTML = `<div style="text-align:center; padding:30px; color:#999;">No hay anticipos registrados todavía</div>`;
+
+  if (anticiposDelMes.length === 0) {
+    lista.innerHTML = `<div style="text-align:center; padding:30px; color:#999;">No hay anticipos registrados este mes</div>`;
     return;
   }
-  
-  const ordenados = [...anticipos].sort((a, b) => {
+
+  const ordenados = [...anticiposDelMes].sort((a, b) => {
     if (a.estado !== b.estado) return a.estado === 'pendiente' ? -1 : 1;
     return new Date(b.fechaAnticipo) - new Date(a.fechaAnticipo);
   });
