@@ -1661,6 +1661,10 @@ body {
     
     <div class="settings-group">
       <h3>Transferir Datos</h3>
+      <button class="btn btn-secondary" id="btnSincronizarHistorial" onclick="sincronizarHistorialNube()">Sincronizar historial</button>
+      <div class="hint" style="margin: 0 0 14px;">
+        Trae de la nube las ventas de todo el año. Hazlo antes de exportar.
+      </div>
       <button class="btn btn-primary" onclick="exportarDatos()">Exportar Datos</button>
       <button class="btn btn-secondary" onclick="importarDatos()">Importar Datos</button>
       <div class="hint" style="margin-top: 10px;">
@@ -2047,25 +2051,34 @@ function cambiarTab(tab) {
   }
 }
 
-function inicializarMes() {
-  const diasEnMes = new Date(yearActual, mesActual + 1, 0).getDate();
-  datos = {};
-  
+// Estructura de un día vacío (la misma que usa todo el Tracker)
+function crearDiaVacio(abierto) {
+  return {
+    abierto: abierto,
+    ingreso: 0,
+    gastos: 0,
+    gastosDetalle: [],
+    servicios: 0,
+    ventasDetalle: [],
+    juan: false,
+    rene: false,
+    daniel: false,
+    pagoCustom: {}
+  };
+}
+
+// Mes completo en blanco para cualquier año/mes (mes 0-11), sin tocar el mes abierto en pantalla
+function crearMesVacio(anio, mes) {
+  const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+  const resultado = {};
   for (let dia = 1; dia <= diasEnMes; dia++) {
-    const fecha = new Date(yearActual, mesActual, dia);
-    datos[dia] = {
-      abierto: fecha.getDay() !== 0,
-      ingreso: 0,
-      gastos: 0,
-      gastosDetalle: [],
-      servicios: 0,
-      ventasDetalle: [],
-      juan: false,
-      rene: false,
-      daniel: false,
-      pagoCustom: {}
-    };
+    resultado[dia] = crearDiaVacio(new Date(anio, mes, dia).getDay() !== 0);
   }
+  return resultado;
+}
+
+function inicializarMes() {
+  datos = crearMesVacio(yearActual, mesActual);
 }
 
 function generarDias() {
@@ -3015,6 +3028,112 @@ function importarDatos() {
   } catch (err) {
     alert('Error al importar datos.\n\nVerifica que el código esté completo y sea correcto.');
     console.error('Error importando:', err);
+  }
+}
+
+// Trae de la nube (Firestore) las ventas de TODO el año que se está viendo y las guarda en este
+// dispositivo, mes por mes. Sin esto, el Tracker solo baja las ventas del día que tengas abierto
+// en la pestaña Ventas, y los demás días no entran al exportar ni a los resúmenes.
+async function sincronizarHistorialNube() {
+  if (!firebaseDisponible || !db) {
+    mostrarToast('Sin conexión con la nube', 'error');
+    return;
+  }
+  const btn = document.getElementById('btnSincronizarHistorial');
+  if (btn && btn.disabled) return;
+  const textoOriginal = btn ? btn.textContent : '';
+  if (btn) btn.disabled = true;
+
+  try {
+    // Fechas desde el 1 de enero del año visto hasta hoy (o hasta el 31 de dic. si es un año pasado)
+    const hoy = new Date();
+    let fin = new Date(yearActual, 11, 31);
+    if (fin > hoy) fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    const fechas = [];
+    for (let d = new Date(yearActual, 0, 1); d <= fin; d.setDate(d.getDate() + 1)) {
+      fechas.push({
+        id: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+        mes: d.getMonth(),
+        dia: d.getDate()
+      });
+    }
+
+    // Consultar en tandas para no saturar la conexión
+    const TANDA = 12;
+    const conVentas = [];
+    let fallidas = 0;
+    for (let i = 0; i < fechas.length; i += TANDA) {
+      const tanda = fechas.slice(i, i + TANDA);
+      const resultados = await Promise.allSettled(tanda.map(f =>
+        db.collection('andrade_ventas').doc(f.id).collection('items').orderBy('creado').get()
+      ));
+      resultados.forEach((r, idx) => {
+        if (r.status !== 'fulfilled') { fallidas++; return; }
+        if (r.value.empty) return;
+        conVentas.push({
+          mes: tanda[idx].mes,
+          dia: tanda[idx].dia,
+          items: r.value.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }))
+        });
+      });
+      if (btn) btn.textContent = `Sincronizando... ${Math.min(100, Math.round((i + TANDA) / fechas.length * 100))}%`;
+    }
+
+    if (fallidas === fechas.length) {
+      mostrarToast('No se pudo leer la nube. Revisa tu conexión.', 'error');
+      return;
+    }
+
+    // Agrupar por mes y mezclar con lo que ya hay guardado en este dispositivo
+    const mesesTocados = new Set();
+    const porMes = {};
+    conVentas.forEach(x => { (porMes[x.mes] = porMes[x.mes] || []).push(x); });
+
+    Object.keys(porMes).forEach(mesStr => {
+      const mes = parseInt(mesStr);
+      const key = `andrade_${yearActual}_${mes}`;
+      const esMesAbierto = mes === mesActual;
+      let datosMes;
+      if (esMesAbierto) {
+        datosMes = datos;
+      } else {
+        const guardado = localStorage.getItem(key);
+        datosMes = guardado ? JSON.parse(guardado) : crearMesVacio(yearActual, mes);
+      }
+
+      porMes[mesStr].forEach(x => {
+        if (!datosMes[x.dia]) datosMes[x.dia] = crearDiaVacio(true);
+        const d = datosMes[x.dia];
+        d.ventasDetalle = x.items; // la nube manda, igual que cuando abres ese día en Ventas
+        d.ingreso = x.items.reduce((s, v) => s + (parseFloat(v.precio) || 0), 0);
+        d.servicios = x.items.length;
+        d.abierto = true;
+      });
+
+      localStorage.setItem(key, JSON.stringify(datosMes));
+      mesesTocados.add(mes);
+    });
+
+    // Refrescar lo que se ve en pantalla (el mes abierto pudo cambiar)
+    generarDias();
+    generarResumenQuincenas();
+    actualizarTotales();
+    actualizarMetas();
+    if (tabActual === 'ventas') renderTabVentas();
+
+    if (conVentas.length === 0) {
+      mostrarToast(`No hay ventas en la nube para ${yearActual}`);
+    } else {
+      mostrarToast(`${conVentas.length} día(s) de ${mesesTocados.size} mes(es) sincronizados` + (fallidas ? ` (${fallidas} fallaron)` : ''));
+    }
+  } catch (err) {
+    console.error('Error sincronizando historial:', err);
+    mostrarToast('Error al sincronizar. Intenta de nuevo.', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
   }
 }
 
