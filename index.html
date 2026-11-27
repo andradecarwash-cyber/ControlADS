@@ -2824,7 +2824,21 @@ function exportarDatos() {
   todosLosMeses[`andrade_${yearActual}_${mesActual}`] = datos;
   
   const numMeses = Object.keys(todosLosMeses).length;
-  
+
+  // Lista legible de lo que realmente va dentro del código (mes + cuántos días tienen datos),
+  // para poder verificar antes de enviarlo que estén todos los meses esperados
+  const resumenMeses = Object.keys(todosLosMeses)
+    .map(key => {
+      const m = key.match(/^andrade_(\d+)_(\d+)$/);
+      const diasConDatos = Object.values(todosLosMeses[key] || {}).filter(d =>
+        d && ((d.ingreso || 0) > 0 || (d.gastos || 0) > 0 || (d.ventasDetalle && d.ventasDetalle.length > 0))
+      ).length;
+      return { anio: parseInt(m[1]), mes: parseInt(m[2]), diasConDatos };
+    })
+    .sort((a, b) => a.anio - b.anio || a.mes - b.mes)
+    .map(x => `- ${MESES[x.mes]} ${x.anio}: ${x.diasConDatos > 0 ? x.diasConDatos + ' día(s) con datos' : 'sin datos'}`)
+    .join('\n');
+
   const exportData = {
     version: '3.0',
     fecha: new Date().toISOString(),
@@ -2859,7 +2873,7 @@ function exportarDatos() {
     
     // Mostrar el código en un alert para copiarlo
     const mensaje = `Datos copiados al portapapeles!\n\n` +
-                   `${numMeses} mes(es) incluido(s)\n\n` +
+                   `${numMeses} mes(es) incluido(s):\n${resumenMeses}\n\n` +
                    `También puedes copiar este código:\n\n` +
                    `${base64Data.substring(0, 50)}...\n\n` +
                    `El código completo está en tu portapapeles.\n` +
