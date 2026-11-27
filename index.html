@@ -3766,10 +3766,25 @@ function actualizarResumenTiposVehiculo() {
   if (el) el.textContent = catalogoVehiculos.map(v => v.nombre).join(', ');
 }
 
+// Si el nombre del servicio ya trae el tipo de vehículo entre paréntesis al final
+// (ej. "Tratamiento Cerámico Deluxe (Sedán)" o "... (Pickup/Camioneta)"), ya no tiene
+// sentido volver a preguntarlo abajo con las tarjetas de vehículo — se usa ese texto directo.
+function extraerVehiculoDelNombre(nombre) {
+  const m = (nombre || '').match(/\(([^()]*(?:Sedán|Pickup|Camioneta|Moto)[^()]*)\)\s*$/i);
+  return m ? m[1] : null;
+}
+
 function seleccionarServicio(id) {
   const s = catalogoServicios.find(x => x.id === id);
   if (!s) return;
   ventaServicioPendiente = s;
+
+  const vehiculoImplicito = extraerVehiculoDelNombre(s.nombre);
+  if (vehiculoImplicito) {
+    confirmarVenta(null, vehiculoImplicito);
+    return;
+  }
+
   document.getElementById('servicioSeleccionadoLabel').textContent = `${s.nombre} ($${s.precio})`;
   document.getElementById('panelVehiculo').style.display = 'block';
 }
@@ -3803,9 +3818,10 @@ function cancelarVenta() {
   if (panel) panel.style.display = 'none';
 }
 
-async function confirmarVenta(vehiculoId) {
+async function confirmarVenta(vehiculoId, vehiculoNombreImplicito) {
   if (!ventaServicioPendiente) return;
-  const vehiculo = catalogoVehiculos.find(v => v.id === vehiculoId);
+  const vehiculo = vehiculoId ? catalogoVehiculos.find(v => v.id === vehiculoId) : null;
+  const nombreVehiculo = vehiculoNombreImplicito || (vehiculo ? vehiculo.nombre : '');
   const dia = ventaDiaSeleccionado;
   const servicioVendido = ventaServicioPendiente;
 
@@ -3819,7 +3835,7 @@ async function confirmarVenta(vehiculoId) {
   const nuevaVenta = {
     servicio: servicioVendido.nombre,
     precio: servicioVendido.precio,
-    vehiculo: vehiculo ? vehiculo.nombre : '',
+    vehiculo: nombreVehiculo,
     notaVehiculo: notaVehiculo.trim(),
     hora: new Date().toTimeString().slice(0, 5)
   };
