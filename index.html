@@ -1663,7 +1663,11 @@ body {
       <h3>Transferir Datos</h3>
       <button class="btn btn-secondary" id="btnSincronizarHistorial" onclick="sincronizarHistorialNube()">Sincronizar historial</button>
       <div class="hint" style="margin: 0 0 14px;">
-        Trae de la nube las ventas de todo el año. Hazlo antes de exportar.
+        Trae de la nube las ventas de todo el año. Hazlo antes de exportar o descargar el reporte.
+      </div>
+      <button class="btn btn-primary" onclick="descargarReporteCSV()">Descargar reporte (Excel)</button>
+      <div class="hint" style="margin: 0 0 14px;">
+        Para administración: archivo con todas las ventas y gastos, listo para abrir en Excel. Envíalo como archivo adjunto.
       </div>
       <button class="btn btn-primary" onclick="exportarDatos()">Exportar Datos</button>
       <button class="btn btn-secondary" onclick="importarDatos()">Importar Datos</button>
@@ -2900,6 +2904,76 @@ function exportarDatos() {
                    `Guárdalo para importar en otra versión.`;
     prompt('Copia este código (Ctrl+C o mantén presionado):', base64Data);
   }
+}
+
+// Reporte legible para administración: un archivo CSV (se abre en Excel o Google Sheets) con una fila
+// por venta o gasto de todos los meses guardados en este dispositivo. Se envía como ARCHIVO, no pegado
+// como texto, así no se corta como pasaba con el código de Exportar.
+function descargarReporteCSV() {
+  const todosLosMeses = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && /^andrade_\d+_\d+$/.test(key)) {
+      try { todosLosMeses[key] = JSON.parse(localStorage.getItem(key)); } catch (e) { /* mes dañado: se omite */ }
+    }
+  }
+  todosLosMeses[`andrade_${yearActual}_${mesActual}`] = datos; // el mes abierto, tal como está en pantalla
+
+  const esc = v => {
+    const s = (v === null || v === undefined) ? '' : String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const filas = [['Fecha', 'Mes', 'Quincena', 'Tipo', 'Descripción', 'Vehículo', 'Detalle', 'Hora', 'Monto']];
+  const mesesOrdenados = Object.keys(todosLosMeses)
+    .map(key => { const m = key.match(/^andrade_(\d+)_(\d+)$/); return { key, anio: parseInt(m[1]), mes: parseInt(m[2]) }; })
+    .sort((a, b) => a.anio - b.anio || a.mes - b.mes);
+
+  mesesOrdenados.forEach(({ key, anio, mes }) => {
+    const datosMes = todosLosMeses[key] || {};
+    Object.keys(datosMes).map(Number).sort((a, b) => a - b).forEach(dia => {
+      const d = datosMes[dia];
+      if (!d) return;
+      const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const base = [fecha, MESES[mes], getQuincena(dia)];
+
+      if (d.ventasDetalle && d.ventasDetalle.length > 0) {
+        d.ventasDetalle.forEach(v => {
+          filas.push([...base, 'Venta', v.servicio || '', v.vehiculo || '', v.notaVehiculo || '', v.hora || '', parseFloat(v.precio) || 0]);
+        });
+      } else if ((d.ingreso || 0) > 0) {
+        filas.push([...base, 'Venta (total del día, sin detalle)', '', '', '', '', parseFloat(d.ingreso) || 0]);
+      }
+
+      if (d.gastosDetalle && d.gastosDetalle.length > 0) {
+        d.gastosDetalle.forEach(g => {
+          if ((parseFloat(g.monto) || 0) > 0 || g.concepto) {
+            filas.push([...base, 'Gasto', g.concepto || '', '', '', '', parseFloat(g.monto) || 0]);
+          }
+        });
+      } else if ((d.gastos || 0) > 0) {
+        filas.push([...base, 'Gasto (total del día, sin detalle)', '', '', '', '', parseFloat(d.gastos) || 0]);
+      }
+    });
+  });
+
+  if (filas.length === 1) {
+    mostrarToast('No hay datos para el reporte', 'error');
+    return;
+  }
+
+  // BOM al inicio para que Excel muestre bien las tildes
+  const csv = '﻿' + filas.map(f => f.map(esc).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Detailing_Finances_reporte_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+  mostrarToast(`Reporte listo: ${filas.length - 1} filas, ${mesesOrdenados.length} mes(es)`);
 }
 
 function importarDatos() {
